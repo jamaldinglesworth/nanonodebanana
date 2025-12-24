@@ -17,6 +17,7 @@ import {
   NanoBananaNode,
   NanoBananaEditNode,
   NanoBananaProNode,
+  NanoBananaProEditNode,
   ImageOutputNode,
   SaveImageNode,
   GalleryNode,
@@ -45,6 +46,7 @@ const NODE_PATHS: Record<string, unknown> = {
   'generation/nano-banana': NanoBananaNode,
   'generation/nano-banana-edit': NanoBananaEditNode,
   'generation/nano-banana-pro': NanoBananaProNode,
+  'generation/nano-banana-pro-edit': NanoBananaProEditNode,
 
   // Output nodes
   'output/image': ImageOutputNode,
