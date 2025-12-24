@@ -9,7 +9,7 @@
 
 A visual node-based workflow editor for AI image generation, similar to ComfyUI. Create workflows by connecting nodes on a canvas and execute them to generate images using Google Gemini and Fal.ai models.
 
-![NanoNodeBanana Screenshot](docs/screenshot.png)
+![NanoNodeBanana Screenshot](image.png)
 
 ## Features
 
