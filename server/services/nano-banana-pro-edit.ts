@@ -38,6 +38,30 @@ function configureClient(): void {
 }
 
 /**
+ * Convert base64 image to data URI if needed.
+ */
+function toImageUrl(image: string): string {
+  // Already a URL or data URI
+  if (image.startsWith('http://') || image.startsWith('https://') || image.startsWith('data:')) {
+    return image
+  }
+
+  // Raw base64 - detect format and convert to data URI
+  if (image.startsWith('/9j/')) {
+    return `data:image/jpeg;base64,${image}`
+  } else if (image.startsWith('iVBORw')) {
+    return `data:image/png;base64,${image}`
+  } else if (image.startsWith('R0lGOD')) {
+    return `data:image/gif;base64,${image}`
+  } else if (image.startsWith('UklGR')) {
+    return `data:image/webp;base64,${image}`
+  }
+
+  // Default to PNG
+  return `data:image/png;base64,${image}`
+}
+
+/**
  * Edit images using Nano Banana Pro model.
  * Combines image editing with Pro features (resolution, web search).
  */
@@ -47,10 +71,13 @@ export async function editWithNanoBananaPro(
   configureClient()
 
   try {
+    // Convert images to proper URL format (data URI for base64)
+    const imageUrls = params.imageUrls.map(toImageUrl)
+
     const result = await fal.subscribe('fal-ai/nano-banana-pro/edit', {
       input: {
         prompt: params.prompt,
-        image_urls: params.imageUrls,
+        image_urls: imageUrls,
         num_images: params.numImages,
         resolution: params.resolution,
         aspect_ratio: params.aspectRatio as
