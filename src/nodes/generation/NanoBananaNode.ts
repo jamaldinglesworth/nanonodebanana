@@ -72,6 +72,8 @@ export const NanoBananaNode = createNodeClass(
       executionTime: 0,
       description: '',
     },
+    resizable: true,
+    showProgressIndicator: true,
   },
   async (node: ExecutableNode) => {
     const prompt = getInputValue<string>(node, 'prompt')

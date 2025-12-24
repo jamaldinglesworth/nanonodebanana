@@ -76,6 +76,8 @@ export const NanoBananaEditNode = createNodeClass(
       executionTime: 0,
       description: '',
     },
+    resizable: true,
+    showProgressIndicator: true,
   },
   async (node: ExecutableNode) => {
     const image = getInputValue<string>(node, 'image')

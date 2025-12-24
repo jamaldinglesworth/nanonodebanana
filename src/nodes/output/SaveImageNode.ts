@@ -54,6 +54,7 @@ export const SaveImageNode = createNodeClass(
       auto_save: false,
       saveCount: 0,
     },
+    resizable: true,
   },
   async (node: ExecutableNode) => {
     const image = getInputValue<string>(node, 'image')

@@ -53,6 +53,8 @@ export const FalVideoNode = createNodeClass(
       aspect_ratio: '16:9',
       executionTime: 0,
     },
+    resizable: true,
+    showProgressIndicator: true,
   },
   async (node: ExecutableNode) => {
     const prompt = getInputValue<string>(node, 'prompt')

@@ -60,6 +60,8 @@ export const GeminiGeneratorNode = createNodeClass(
       safety_filter: true,
       executionTime: 0,
     },
+    resizable: true,
+    showProgressIndicator: true,
   },
   async (node: ExecutableNode) => {
     const prompt = getInputValue<string>(node, 'prompt')

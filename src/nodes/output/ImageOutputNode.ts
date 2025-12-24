@@ -22,7 +22,7 @@ export const ImageOutputNode = createNodeClass(
         defaultValue: 200,
         options: {
           min: 100,
-          max: 600,
+          max: 1024,
           step: 10,
         },
       },

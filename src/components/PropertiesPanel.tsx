@@ -1,4 +1,12 @@
+import { useState, useEffect, useCallback } from 'react'
 import type { LGraphNode } from 'litegraph.js'
+
+// Extend Window interface for debugging purposes
+declare global {
+  interface Window {
+    selectedNode: LGraphNode | null
+  }
+}
 
 interface PropertiesPanelProps {
   selectedNode: LGraphNode | null
@@ -9,6 +17,45 @@ interface PropertiesPanelProps {
  * Shows node settings, input configuration, and metadata.
  */
 export function PropertiesPanel({ selectedNode }: PropertiesPanelProps) {
+  // Use a state to force re-render when node internal state changes
+  const [, setTick] = useState(0)
+  const forceUpdate = useCallback(() => setTick(t => t + 1), [])
+
+  // Subscribe to node changes
+  useEffect(() => {
+    if (!selectedNode) {
+      window.selectedNode = null
+      return
+    }
+
+    window.selectedNode = selectedNode
+    console.log('PropertiesPanel: Subscribing to node', selectedNode.id)
+
+    // Store original handlers
+    const originalOnPropertyChanged = selectedNode.onPropertyChanged
+
+    // Override onPropertyChanged to trigger React update
+    selectedNode.onPropertyChanged = function (name, value, prev_value) {
+      console.log(`PropertiesPanel: Property ${name} changed to ${value}`)
+      if (originalOnPropertyChanged) {
+        originalOnPropertyChanged.call(this, name, value, prev_value)
+      }
+      forceUpdate()
+    }
+
+    // Polling fallback every 200ms during selection to ensure we catch all changes
+    // (Manual resizing in LiteGraph can sometimes bypass standard property hooks if not careful)
+    const interval = setInterval(() => {
+      forceUpdate()
+    }, 200)
+
+    return () => {
+      console.log('PropertiesPanel: Unsubscribing from node', selectedNode.id)
+      selectedNode.onPropertyChanged = originalOnPropertyChanged
+      clearInterval(interval)
+    }
+  }, [selectedNode, forceUpdate])
+
   if (!selectedNode) {
     return (
       <div className="flex-1 border-b border-zinc-700 p-4">
@@ -20,6 +67,25 @@ export function PropertiesPanel({ selectedNode }: PropertiesPanelProps) {
         </p>
       </div>
     )
+  }
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    selectedNode.title = e.target.value
+    forceUpdate()
+    if (selectedNode.graph) {
+      selectedNode.setDirtyCanvas?.(true, true)
+    }
+  }
+
+  const handlePropertyChange = (key: string, value: string) => {
+    // Try to parse as number if it looks like one
+    let finalValue: string | number = value
+    if (!isNaN(Number(value)) && value.trim() !== '') {
+      finalValue = Number(value)
+    }
+
+    selectedNode.setProperty(key, finalValue)
+    forceUpdate()
   }
 
   return (
@@ -36,9 +102,7 @@ export function PropertiesPanel({ selectedNode }: PropertiesPanelProps) {
         <input
           type="text"
           value={selectedNode.title || ''}
-          onChange={() => {
-            // TODO: Implement title change
-          }}
+          onChange={handleTitleChange}
           className="w-full rounded-md border border-zinc-600 bg-zinc-700 px-3 py-1.5 text-sm text-zinc-100 focus:border-blue-500 focus:outline-none"
         />
       </div>
@@ -114,9 +178,7 @@ export function PropertiesPanel({ selectedNode }: PropertiesPanelProps) {
                 <input
                   type="text"
                   value={String(value)}
-                  onChange={() => {
-                    // TODO: Implement property change
-                  }}
+                  onChange={(e) => handlePropertyChange(key, e.target.value)}
                   className="w-full rounded-md border border-zinc-600 bg-zinc-700 px-2 py-1 text-xs text-zinc-100 focus:border-blue-500 focus:outline-none"
                 />
               </div>
