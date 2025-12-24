@@ -3,6 +3,8 @@ import type {
   GeminiResponse,
   FalRequest,
   FalResponse,
+  NanoBananaRequest,
+  NanoBananaResponse,
   WorkflowData,
 } from '../types/nodes'
 
@@ -50,6 +52,16 @@ export const generateApi = {
    */
   async fal(request: FalRequest): Promise<FalResponse> {
     return fetchApi<FalResponse>('/generate/fal', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  /**
+   * Generate images using Nano Banana model.
+   */
+  async nanoBanana(request: NanoBananaRequest): Promise<NanoBananaResponse> {
+    return fetchApi<NanoBananaResponse>('/generate/nano-banana', {
       method: 'POST',
       body: JSON.stringify(request),
     })

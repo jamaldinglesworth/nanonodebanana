@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { generateWithGemini } from '../services/gemini'
 import { generateWithFal } from '../services/fal'
+import { generateWithNanoBanana } from '../services/nano-banana'
 
 /**
  * Request schema for Gemini image generation.
@@ -103,5 +104,53 @@ export const generateRoutes = new Elysia({ prefix: '/api/generate' })
     },
     {
       body: falRequestSchema,
+    }
+  )
+
+  /**
+   * Generate images using Nano Banana model.
+   */
+  .post(
+    '/nano-banana',
+    async ({ body }) => {
+      const startTime = Date.now()
+
+      const result = await generateWithNanoBanana({
+        prompt: body.prompt,
+        numImages: body.numImages,
+        aspectRatio: body.aspectRatio,
+        outputFormat: body.outputFormat,
+      })
+
+      const executionTime = Date.now() - startTime
+
+      return {
+        images: result.images,
+        description: result.description,
+        executionTime,
+      }
+    },
+    {
+      body: t.Object({
+        prompt: t.String({ minLength: 3, maxLength: 5000 }),
+        numImages: t.Number({ minimum: 1, maximum: 4, default: 1 }),
+        aspectRatio: t.Union([
+          t.Literal('21:9'),
+          t.Literal('16:9'),
+          t.Literal('3:2'),
+          t.Literal('4:3'),
+          t.Literal('5:4'),
+          t.Literal('1:1'),
+          t.Literal('4:5'),
+          t.Literal('3:4'),
+          t.Literal('2:3'),
+          t.Literal('9:16'),
+        ]),
+        outputFormat: t.Union([
+          t.Literal('jpeg'),
+          t.Literal('png'),
+          t.Literal('webp'),
+        ]),
+      }),
     }
   )

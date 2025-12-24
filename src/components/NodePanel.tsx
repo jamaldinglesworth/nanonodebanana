@@ -100,6 +100,12 @@ const NODE_CATEGORIES: NodeCategory[] = [
         colour: NODE_TYPE_COLOURS.falVideo,
         description: 'Fal.ai video generation',
       },
+      {
+        type: 'generation/nano-banana',
+        label: 'Nano Banana',
+        colour: NODE_TYPE_COLOURS.nanoBanana,
+        description: 'Nano Banana image generation',
+      },
     ],
   },
   {
