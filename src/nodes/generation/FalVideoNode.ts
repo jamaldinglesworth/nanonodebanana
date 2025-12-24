@@ -13,6 +13,7 @@ export const FalVideoNode = createNodeClass(
     title: 'Fal Video',
     category: 'generation',
     colour: NODE_TYPE_COLOURS.falVideo,
+    description: 'Fal.ai video generation',
     inputs: [
       { name: 'prompt', type: 'string' },
       { name: 'reference', type: 'image', optional: true },

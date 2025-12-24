@@ -32,6 +32,7 @@ export const NanoBananaNode = createNodeClass(
     title: 'Nano Banana',
     category: 'generation',
     colour: NODE_TYPE_COLOURS.nanoBanana,
+    description: 'Nano Banana image generation',
     inputs: [
       { name: 'prompt', type: 'string' },
     ],

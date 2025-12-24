@@ -10,6 +10,7 @@ export const CombinePromptsNode = createNodeClass(
     title: 'Combine Prompts',
     category: 'processing',
     colour: NODE_TYPE_COLOURS.combinePrompts,
+    description: 'Merge multiple prompts',
     inputs: [
       { name: 'prompt_1', type: 'string', optional: true },
       { name: 'prompt_2', type: 'string', optional: true },

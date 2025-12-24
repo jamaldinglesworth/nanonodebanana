@@ -291,3 +291,7 @@ function adjustBrightness(hex: string, amount: number): string {
 // Static properties for LiteGraph registration
 ImageSourceNode.title = 'Image Source'
 ImageSourceNode.desc = 'Image upload with drag-and-drop and clipboard paste'
+// Additional metadata for dynamic UI generation
+;(ImageSourceNode as unknown as Record<string, unknown>).nodeCategory = 'input'
+;(ImageSourceNode as unknown as Record<string, unknown>).nodeColour = NODE_TYPE_COLOURS.imageSource
+;(ImageSourceNode as unknown as Record<string, unknown>).nodeDescription = 'Image upload or URL'

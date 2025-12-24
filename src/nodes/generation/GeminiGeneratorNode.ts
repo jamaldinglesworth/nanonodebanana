@@ -11,6 +11,7 @@ export const GeminiGeneratorNode = createNodeClass(
     title: 'Gemini Generator',
     category: 'generation',
     colour: NODE_TYPE_COLOURS.gemini,
+    description: 'Google Gemini image generation',
     inputs: [
       { name: 'prompt', type: 'string' },
       { name: 'negative', type: 'string', optional: true },

@@ -166,6 +166,10 @@ function adjustBrightness(hex: string, amount: number): string {
 // Static properties for LiteGraph registration
 NegativePromptNode.title = 'Negative Prompt'
 NegativePromptNode.desc = 'Negative prompt with quick-add buttons'
+// Additional metadata for dynamic UI generation
+;(NegativePromptNode as unknown as Record<string, unknown>).nodeCategory = 'processing'
+;(NegativePromptNode as unknown as Record<string, unknown>).nodeColour = NODE_TYPE_COLOURS.negativePrompt
+;(NegativePromptNode as unknown as Record<string, unknown>).nodeDescription = 'Negative prompt input'
 
 // Export for use in UI
 export { COMMON_NEGATIVES }

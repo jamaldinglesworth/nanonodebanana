@@ -35,6 +35,7 @@ export const NanoBananaEditNode = createNodeClass(
     title: 'Nano Banana Edit',
     category: 'generation',
     colour: NODE_TYPE_COLOURS.nanoBananaEdit,
+    description: 'Edit images with Nano Banana',
     inputs: [
       { name: 'image', type: 'image' },
       { name: 'prompt', type: 'string' },

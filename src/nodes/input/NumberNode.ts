@@ -10,6 +10,7 @@ export const NumberNode = createNodeClass(
     title: 'Number',
     category: 'input',
     colour: NODE_TYPE_COLOURS.number,
+    description: 'Numeric value input',
     outputs: [
       { name: 'value', type: 'number' },
     ],

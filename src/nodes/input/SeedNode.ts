@@ -150,3 +150,7 @@ function adjustBrightness(hex: string, amount: number): string {
 // Static properties for LiteGraph registration
 SeedNode.title = 'Seed'
 SeedNode.desc = 'Random seed generator with randomize button'
+// Additional metadata for dynamic UI generation
+;(SeedNode as unknown as Record<string, unknown>).nodeCategory = 'input'
+;(SeedNode as unknown as Record<string, unknown>).nodeColour = NODE_TYPE_COLOURS.seed
+;(SeedNode as unknown as Record<string, unknown>).nodeDescription = 'Random seed generator'

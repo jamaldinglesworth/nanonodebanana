@@ -1,10 +1,65 @@
-import { useState, useCallback } from 'react'
-import { NODE_TYPE_COLOURS } from '../types/nodes'
+import { useState, useCallback, useMemo } from 'react'
+import type { NodeClassWithMetadata } from '../nodes/base/BaseNode'
 
-interface NodeCategory {
-  name: string
-  icon: string
-  nodes: NodeItem[]
+// Import all node classes from the registry
+import {
+  PromptNode,
+  ImageSourceNode,
+  SeedNode,
+  NumberNode,
+  CombinePromptsNode,
+  StylePresetNode,
+  NegativePromptNode,
+  ImageResizeNode,
+  GeminiGeneratorNode,
+  FalFluxNode,
+  FalVideoNode,
+  NanoBananaNode,
+  NanoBananaEditNode,
+  NanoBananaProNode,
+  ImageOutputNode,
+  SaveImageNode,
+  GalleryNode,
+} from '../nodes'
+
+/**
+ * Node paths mapping - matches the registration in src/nodes/index.ts
+ */
+const NODE_PATHS: Record<string, unknown> = {
+  // Input nodes
+  'input/prompt': PromptNode,
+  'input/image': ImageSourceNode,
+  'input/seed': SeedNode,
+  'input/number': NumberNode,
+
+  // Processing nodes
+  'processing/combine': CombinePromptsNode,
+  'processing/style': StylePresetNode,
+  'processing/negative': NegativePromptNode,
+  'processing/resize': ImageResizeNode,
+
+  // Generation nodes
+  'generation/gemini': GeminiGeneratorNode,
+  'generation/fal-flux': FalFluxNode,
+  'generation/fal-video': FalVideoNode,
+  'generation/nano-banana': NanoBananaNode,
+  'generation/nano-banana-edit': NanoBananaEditNode,
+  'generation/nano-banana-pro': NanoBananaProNode,
+
+  // Output nodes
+  'output/image': ImageOutputNode,
+  'output/save': SaveImageNode,
+  'output/gallery': GalleryNode,
+}
+
+/**
+ * Category metadata with display order and icons.
+ */
+const CATEGORY_META: Record<string, { icon: string; order: number }> = {
+  input: { icon: '📥', order: 0 },
+  processing: { icon: '⚙️', order: 1 },
+  generation: { icon: '✨', order: 2 },
+  output: { icon: '📤', order: 3 },
 }
 
 interface NodeItem {
@@ -14,145 +69,73 @@ interface NodeItem {
   description: string
 }
 
+interface NodeCategory {
+  name: string
+  icon: string
+  nodes: NodeItem[]
+}
+
 /**
- * Node definitions organised by category.
+ * Builds category structure dynamically from registered nodes.
  */
-const NODE_CATEGORIES: NodeCategory[] = [
-  {
-    name: 'Input',
-    icon: '📥',
-    nodes: [
-      {
-        type: 'input/prompt',
-        label: 'Prompt',
-        colour: NODE_TYPE_COLOURS.prompt,
-        description: 'Text prompt input',
-      },
-      {
-        type: 'input/image',
-        label: 'Image Source',
-        colour: NODE_TYPE_COLOURS.imageSource,
-        description: 'Image upload or URL',
-      },
-      {
-        type: 'input/seed',
-        label: 'Seed',
-        colour: NODE_TYPE_COLOURS.seed,
-        description: 'Random seed generator',
-      },
-      {
-        type: 'input/number',
-        label: 'Number',
-        colour: NODE_TYPE_COLOURS.number,
-        description: 'Numeric value input',
-      },
-    ],
-  },
-  {
-    name: 'Processing',
-    icon: '⚙️',
-    nodes: [
-      {
-        type: 'processing/combine',
-        label: 'Combine Prompts',
-        colour: NODE_TYPE_COLOURS.combinePrompts,
-        description: 'Merge multiple prompts',
-      },
-      {
-        type: 'processing/style',
-        label: 'Style Preset',
-        colour: NODE_TYPE_COLOURS.stylePreset,
-        description: 'Apply style modifiers',
-      },
-      {
-        type: 'processing/negative',
-        label: 'Negative Prompt',
-        colour: NODE_TYPE_COLOURS.negativePrompt,
-        description: 'Negative prompt input',
-      },
-      {
-        type: 'processing/resize',
-        label: 'Image Resize',
-        colour: NODE_TYPE_COLOURS.imageResize,
-        description: 'Resize or crop images',
-      },
-    ],
-  },
-  {
-    name: 'Generation',
-    icon: '✨',
-    nodes: [
-      {
-        type: 'generation/gemini',
-        label: 'Gemini Generator',
-        colour: NODE_TYPE_COLOURS.gemini,
-        description: 'Google Gemini image generation',
-      },
-      {
-        type: 'generation/fal-flux',
-        label: 'Fal Flux',
-        colour: NODE_TYPE_COLOURS.falFlux,
-        description: 'Fal.ai Flux model',
-      },
-      {
-        type: 'generation/fal-video',
-        label: 'Fal Video',
-        colour: NODE_TYPE_COLOURS.falVideo,
-        description: 'Fal.ai video generation',
-      },
-      {
-        type: 'generation/nano-banana',
-        label: 'Nano Banana',
-        colour: NODE_TYPE_COLOURS.nanoBanana,
-        description: 'Nano Banana image generation',
-      },
-      {
-        type: 'generation/nano-banana-edit',
-        label: 'Nano Banana Edit',
-        colour: NODE_TYPE_COLOURS.nanoBananaEdit,
-        description: 'Edit images with Nano Banana',
-      },
-      {
-        type: 'generation/nano-banana-pro',
-        label: 'Nano Banana Pro',
-        colour: NODE_TYPE_COLOURS.nanoBananaPro,
-        description: 'Pro model with resolution control & web search',
-      },
-    ],
-  },
-  {
-    name: 'Output',
-    icon: '📤',
-    nodes: [
-      {
-        type: 'output/image',
-        label: 'Image Output',
-        colour: NODE_TYPE_COLOURS.imageOutput,
-        description: 'Display generated image',
-      },
-      {
-        type: 'output/save',
-        label: 'Save Image',
-        colour: NODE_TYPE_COLOURS.saveImage,
-        description: 'Save to disk',
-      },
-      {
-        type: 'output/gallery',
-        label: 'Gallery',
-        colour: NODE_TYPE_COLOURS.gallery,
-        description: 'Multi-image gallery view',
-      },
-    ],
-  },
-]
+function buildNodeCategories(): NodeCategory[] {
+  const categoryMap = new Map<string, NodeItem[]>()
+
+  for (const [path, NodeClass] of Object.entries(NODE_PATHS)) {
+    const meta = NodeClass as unknown as NodeClassWithMetadata
+
+    // Extract category from path (e.g., "input/prompt" -> "input")
+    const category = path.split('/')[0] ?? 'unknown'
+
+    // Get or create category array
+    if (!categoryMap.has(category)) {
+      categoryMap.set(category, [])
+    }
+
+    // Add node to category
+    categoryMap.get(category)?.push({
+      type: path,
+      label: meta.title ?? path.split('/')[1] ?? 'Unknown',
+      colour: (meta.nodeColour as string) ?? '#333',
+      description: (meta.nodeDescription as string) ?? `${category} node`,
+    })
+  }
+
+  // Convert map to sorted array
+  const categories: NodeCategory[] = []
+
+  for (const [name, nodes] of categoryMap) {
+    const meta = CATEGORY_META[name]
+    categories.push({
+      name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize
+      icon: meta?.icon ?? '📦',
+      nodes,
+    })
+  }
+
+  // Sort by order defined in CATEGORY_META
+  categories.sort((a, b) => {
+    const orderA = CATEGORY_META[a.name.toLowerCase()]?.order ?? 999
+    const orderB = CATEGORY_META[b.name.toLowerCase()]?.order ?? 999
+    return orderA - orderB
+  })
+
+  return categories
+}
 
 /**
  * Left side panel listing available nodes for adding to the canvas.
  * Nodes are organised by category and can be dragged onto the canvas.
+ *
+ * Categories and nodes are built dynamically from the node registry,
+ * ensuring the sidebar always reflects all registered nodes.
  */
 export function NodePanel() {
+  // Build categories once on mount (memoized)
+  const nodeCategories = useMemo(() => buildNodeCategories(), [])
+
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(NODE_CATEGORIES.map(c => c.name))
+    new Set(nodeCategories.map(c => c.name))
   )
 
   const toggleCategory = useCallback((categoryName: string) => {
@@ -183,7 +166,7 @@ export function NodePanel() {
         </h2>
 
         <div className="space-y-1">
-          {NODE_CATEGORIES.map(category => (
+          {nodeCategories.map(category => (
             <div key={category.name}>
               {/* Category header */}
               <button

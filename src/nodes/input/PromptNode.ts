@@ -311,3 +311,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
 // Static properties for LiteGraph registration
 PromptNode.title = 'Prompt'
 PromptNode.desc = 'Text prompt input with inline editable textarea'
+// Additional metadata for dynamic UI generation
+;(PromptNode as unknown as Record<string, unknown>).nodeCategory = 'input'
+;(PromptNode as unknown as Record<string, unknown>).nodeColour = '#333'
+;(PromptNode as unknown as Record<string, unknown>).nodeDescription = 'Text prompt input'

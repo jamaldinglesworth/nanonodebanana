@@ -22,6 +22,7 @@ export const FalFluxNode = createNodeClass(
     title: 'Fal Flux',
     category: 'generation',
     colour: NODE_TYPE_COLOURS.falFlux,
+    description: 'Fal.ai Flux model',
     inputs: [
       { name: 'prompt', type: 'string' },
       { name: 'reference', type: 'image', optional: true },

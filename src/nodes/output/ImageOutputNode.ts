@@ -11,6 +11,7 @@ export const ImageOutputNode = createNodeClass(
     title: 'Image Output',
     category: 'output',
     colour: NODE_TYPE_COLOURS.imageOutput,
+    description: 'Display generated image',
     inputs: [
       { name: 'image', type: 'image' },
     ],

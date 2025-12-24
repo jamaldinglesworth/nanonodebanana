@@ -10,6 +10,7 @@ export const GalleryNode = createNodeClass(
     title: 'Gallery',
     category: 'output',
     colour: NODE_TYPE_COLOURS.gallery,
+    description: 'Multi-image gallery view',
     inputs: [
       { name: 'image_1', type: 'image', optional: true },
       { name: 'image_2', type: 'image', optional: true },

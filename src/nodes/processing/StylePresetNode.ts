@@ -24,6 +24,7 @@ export const StylePresetNode = createNodeClass(
     title: 'Style Preset',
     category: 'processing',
     colour: NODE_TYPE_COLOURS.stylePreset,
+    description: 'Apply style modifiers',
     inputs: [
       { name: 'prompt', type: 'string' },
     ],

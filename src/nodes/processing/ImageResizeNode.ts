@@ -10,6 +10,7 @@ export const ImageResizeNode = createNodeClass(
     title: 'Image Resize',
     category: 'processing',
     colour: NODE_TYPE_COLOURS.imageResize,
+    description: 'Resize or crop images',
     inputs: [
       { name: 'image', type: 'image' },
     ],

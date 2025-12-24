@@ -2,12 +2,26 @@ import type { LGraphNode } from 'litegraph.js'
 import type { NodeCategory, ExecutionStatus } from '../../types/nodes'
 
 /**
+ * Node class with metadata exposed as static properties.
+ * Used for dynamic UI generation in NodePanel.
+ */
+export interface NodeClassWithMetadata {
+  title: string
+  desc: string
+  nodeCategory: NodeCategory
+  nodeColour: string
+  nodeDescription: string
+}
+
+/**
  * Configuration for creating a custom node.
  */
 export interface NodeConfig {
   title: string
   category: NodeCategory
   colour: string
+  /** Short description of what this node does (for UI tooltips) */
+  description?: string
   inputs?: Array<{
     name: string
     type: string
@@ -547,9 +561,13 @@ export function createNodeClass(
     }
   }
 
-  // Set static properties
+  // Set static properties for node registration and UI discovery
   CustomNode.title = config.title
-  CustomNode.desc = `${config.category} node`
+  CustomNode.desc = config.description ?? `${config.category} node`
+  // Expose additional metadata for dynamic UI generation
+  ;(CustomNode as unknown as Record<string, unknown>).nodeCategory = config.category
+  ;(CustomNode as unknown as Record<string, unknown>).nodeColour = config.colour
+  ;(CustomNode as unknown as Record<string, unknown>).nodeDescription = config.description ?? `${config.category} node`
 
   return CustomNode
 }

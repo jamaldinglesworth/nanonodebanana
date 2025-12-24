@@ -10,6 +10,7 @@ export const SaveImageNode = createNodeClass(
     title: 'Save Image',
     category: 'output',
     colour: NODE_TYPE_COLOURS.saveImage,
+    description: 'Save to disk',
     inputs: [
       { name: 'image', type: 'image' },
     ],

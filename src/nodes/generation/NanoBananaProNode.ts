@@ -38,6 +38,7 @@ export const NanoBananaProNode = createNodeClass(
     title: 'Nano Banana Pro',
     category: 'generation',
     colour: NODE_TYPE_COLOURS.nanoBananaPro,
+    description: 'Pro model with resolution control & web search',
     inputs: [
       { name: 'prompt', type: 'string' },
     ],
