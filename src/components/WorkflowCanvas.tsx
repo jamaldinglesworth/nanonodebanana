@@ -38,6 +38,55 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
       // Store LiteGraph reference for node creation
       liteGraphRef.current = LiteGraph
 
+      // Configure LiteGraph defaults to match ComfyUI style
+      LiteGraph.NODE_DEFAULT_COLOR = '#333'
+      LiteGraph.NODE_DEFAULT_BGCOLOR = '#353535'
+      LiteGraph.NODE_DEFAULT_BOXCOLOR = '#666'
+      LiteGraph.NODE_TITLE_COLOR = '#999'
+      LiteGraph.NODE_SELECTED_TITLE_COLOR = '#FFF'
+      LiteGraph.NODE_TEXT_COLOR = '#AAA'
+      LiteGraph.NODE_BOX_OUTLINE_COLOR = '#FFF'
+      LiteGraph.WIDGET_BGCOLOR = '#222'
+      LiteGraph.WIDGET_OUTLINE_COLOR = '#666'
+      LiteGraph.WIDGET_TEXT_COLOR = '#DDD'
+      LiteGraph.WIDGET_SECONDARY_TEXT_COLOR = '#999'
+      LiteGraph.LINK_COLOR = '#9A9'
+      LiteGraph.EVENT_LINK_COLOR = '#A86'
+      LiteGraph.CONNECTING_LINK_COLOR = '#AFA'
+      LiteGraph.DEFAULT_SHADOW_COLOR = 'rgba(0,0,0,0.5)'
+      LiteGraph.NODE_TITLE_HEIGHT = 30
+      LiteGraph.NODE_SLOT_HEIGHT = 20
+      LiteGraph.NODE_WIDGET_HEIGHT = 20
+      LiteGraph.NODE_WIDTH = 140
+      LiteGraph.NODE_MIN_WIDTH = 50
+      LiteGraph.DEFAULT_GROUP_FONT = 24
+
+      // Configure slot type colors (ComfyUI style)
+      LiteGraph.registerNodeType = ((original) => {
+        return function(...args: Parameters<typeof LiteGraph.registerNodeType>) {
+          return original.apply(LiteGraph, args)
+        }
+      })(LiteGraph.registerNodeType.bind(LiteGraph))
+
+      // Set slot colors for different data types
+      if (LiteGraph.slot_types_default_out) {
+        Object.assign(LiteGraph.slot_types_default_out, {
+          string: '#9F9',
+          number: '#99F',
+          image: '#64B5F6',
+          boolean: '#F99',
+        })
+      }
+
+      if (LiteGraph.slot_types_default_in) {
+        Object.assign(LiteGraph.slot_types_default_in, {
+          string: '#9F9',
+          number: '#99F',
+          image: '#64B5F6',
+          boolean: '#F99',
+        })
+      }
+
       // Register all custom nodes before creating the graph
       registerAllNodes()
 

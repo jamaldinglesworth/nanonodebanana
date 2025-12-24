@@ -186,8 +186,13 @@ export function createNodeClass(
 
     // Set node properties
     this.title = config.title
-    this.color = config.colour
-    this.bgcolor = adjustBrightness(config.colour, -40)
+    // Only set custom colors if not using ComfyUI default gray (#333)
+    // ComfyUI uses neutral gray nodes with colorful connection slots
+    if (config.colour && config.colour !== '#333') {
+      this.color = config.colour
+      this.bgcolor = adjustBrightness(config.colour, -40)
+    }
+    // Otherwise let LiteGraph defaults apply (set in WorkflowCanvas)
 
     // Execution state
     this.executionStatus = undefined

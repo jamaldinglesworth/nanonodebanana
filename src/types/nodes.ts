@@ -161,38 +161,52 @@ export interface FalResponse {
 }
 
 /**
- * Node colour definitions by category.
+ * Node colour definitions by category (ComfyUI style - neutral grays).
+ * ComfyUI uses uniform gray nodes with colorful connection slots.
  */
 export const NODE_COLOURS: Record<NodeCategory, string> = {
-  input: '#2563eb',
-  processing: '#0891b2',
-  generation: '#7c3aed',
-  output: '#059669',
+  input: '#333',
+  processing: '#333',
+  generation: '#333',
+  output: '#333',
 }
 
 /**
- * Individual node type colours.
+ * Individual node type colours (ComfyUI style - all use neutral gray).
+ * The differentiation comes from slot colors, not node backgrounds.
  */
 export const NODE_TYPE_COLOURS = {
-  // Input nodes
-  prompt: '#2563eb',
-  imageSource: '#16a34a',
-  seed: '#ca8a04',
-  number: '#2563eb',
+  // Input nodes - neutral gray
+  prompt: '#333',
+  imageSource: '#333',
+  seed: '#333',
+  number: '#333',
 
-  // Processing nodes
-  combinePrompts: '#0891b2',
-  stylePreset: '#db2777',
-  negativePrompt: '#dc2626',
-  imageResize: '#0891b2',
+  // Processing nodes - neutral gray
+  combinePrompts: '#333',
+  stylePreset: '#333',
+  negativePrompt: '#333',
+  imageResize: '#333',
 
-  // Generation nodes
-  gemini: '#7c3aed',
-  falFlux: '#ea580c',
-  falVideo: '#ea580c',
+  // Generation nodes - neutral gray
+  gemini: '#333',
+  falFlux: '#333',
+  falVideo: '#333',
 
-  // Output nodes
-  imageOutput: '#059669',
-  saveImage: '#475569',
-  gallery: '#059669',
+  // Output nodes - neutral gray
+  imageOutput: '#333',
+  saveImage: '#333',
+  gallery: '#333',
+} as const
+
+/**
+ * Slot type colors (ComfyUI style).
+ * These colors differentiate connection types visually.
+ */
+export const SLOT_TYPE_COLOURS = {
+  string: '#9F9',      // Green for text
+  number: '#99F',      // Blue for numbers
+  image: '#64B5F6',    // Light blue for images
+  boolean: '#F99',     // Red/pink for booleans
+  any: '#AAA',         // Gray for generic
 } as const

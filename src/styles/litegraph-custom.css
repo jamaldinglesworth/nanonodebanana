@@ -1,68 +1,84 @@
 /**
- * Custom dark theme for Litegraph.js
- * Provides a modern, cohesive look that matches the application's design system.
+ * ComfyUI-style dark theme for Litegraph.js
+ * Matches the look and feel of ComfyUI's node editor.
  */
 
 :root {
-  /* Litegraph theme variables */
-  --lg-background: #18181b;
-  --lg-node-bg: #27272a;
-  --lg-node-border: #3f3f46;
-  --lg-connection: #a1a1aa;
-  --lg-connection-hover: #f4f4f5;
-  --lg-text: #fafafa;
-  --lg-text-muted: #a1a1aa;
-  --lg-selection: #3b82f6;
+  /* ComfyUI theme variables */
+  --lg-background: #222;
+  --lg-node-color: #333;
+  --lg-node-bgcolor: #353535;
+  --lg-node-boxcolor: #666;
+  --lg-node-title-color: #999;
+  --lg-node-selected-title: #FFF;
+  --lg-node-text: #AAA;
+  --lg-node-box-outline: #FFF;
+  --lg-widget-bg: #222;
+  --lg-widget-outline: #666;
+  --lg-widget-text: #DDD;
+  --lg-widget-secondary-text: #999;
+  --lg-link-color: #9A9;
+  --lg-event-link: #A86;
+  --lg-connecting-link: #AFA;
+  --lg-shadow: rgba(0,0,0,0.5);
+  --lg-selection: #FFF;
 
-  /* Node category colours */
-  --lg-input-color: #2563eb;
-  --lg-processing-color: #0891b2;
-  --lg-generation-color: #7c3aed;
-  --lg-output-color: #059669;
+  /* Slot type colors */
+  --lg-slot-string: #9F9;
+  --lg-slot-number: #99F;
+  --lg-slot-image: #64B5F6;
+  --lg-slot-boolean: #F99;
 }
 
-/* Canvas background */
+/* Canvas background - ComfyUI dark grid */
 .litegraph.litecanvas {
   background-color: var(--lg-background) !important;
 }
 
-/* Node styling */
+/* Node styling - ComfyUI style */
 .litegraph .litegraph-node {
-  background-color: var(--lg-node-bg);
-  border: 1px solid var(--lg-node-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  background-color: var(--lg-node-bgcolor);
+  border: 1px solid var(--lg-node-boxcolor);
+  border-radius: 0;
+  box-shadow: 0 0 6px var(--lg-shadow);
 }
 
 /* Node title bar */
 .litegraph .litegraph-node .title {
-  border-radius: 8px 8px 0 0;
+  background-color: var(--lg-node-color);
+  color: var(--lg-node-title-color);
   font-weight: 500;
+  font-size: 13px;
+  border-radius: 0;
 }
 
-/* Node selection */
+/* Node selection - white outline like ComfyUI */
 .litegraph .litegraph-node.selected {
-  box-shadow: 0 0 0 2px var(--lg-selection);
+  box-shadow: 0 0 0 2px var(--lg-selection), 0 0 6px var(--lg-shadow);
+}
+
+.litegraph .litegraph-node.selected .title {
+  color: var(--lg-node-selected-title);
 }
 
 /* Connection styling */
 .litegraph .link_color {
-  stroke: var(--lg-connection);
-  stroke-width: 2;
+  stroke: var(--lg-link-color);
+  stroke-width: 3;
 }
 
 /* Slot labels */
 .litegraph .litegraph-node .slot {
-  color: var(--lg-text);
+  color: var(--lg-node-text);
   font-size: 12px;
 }
 
-/* Widget styling */
+/* Widget styling - ComfyUI dark inputs */
 .litegraph .litegraph-widget {
-  background-color: #3f3f46;
-  border: 1px solid #52525b;
-  border-radius: 4px;
-  color: var(--lg-text);
+  background-color: var(--lg-widget-bg);
+  border: 1px solid var(--lg-widget-outline);
+  border-radius: 0;
+  color: var(--lg-widget-text);
 }
 
 .litegraph .litegraph-widget:focus {
@@ -70,72 +86,106 @@
   outline: none;
 }
 
-/* Context menu styling */
+/* Context menu styling - ComfyUI style */
 .litegraph .litemenu-entry {
-  background-color: var(--lg-node-bg);
-  color: var(--lg-text);
+  background-color: var(--lg-node-bgcolor);
+  color: var(--lg-node-text);
   padding: 6px 12px;
+  font-size: 13px;
 }
 
 .litegraph .litemenu-entry:hover {
-  background-color: #3f3f46;
+  background-color: #444;
+  color: #FFF;
 }
 
 .litegraph .litemenu {
-  background-color: var(--lg-node-bg);
-  border: 1px solid var(--lg-node-border);
-  border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 
-/* Search box */
+/* Search box - ComfyUI style */
 .litegraph .lite-search-box {
-  background-color: var(--lg-node-bg);
-  border: 1px solid var(--lg-node-border);
-  border-radius: 8px;
-  color: var(--lg-text);
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 0;
+  color: var(--lg-widget-text);
 }
 
 .litegraph .lite-search-box input {
-  background-color: #3f3f46;
-  border: 1px solid #52525b;
-  border-radius: 4px;
-  color: var(--lg-text);
+  background-color: var(--lg-widget-bg);
+  border: 1px solid var(--lg-widget-outline);
+  border-radius: 0;
+  color: var(--lg-widget-text);
 }
 
 /* Panel styling */
 .litegraph-panel {
-  background-color: var(--lg-node-bg);
-  border: 1px solid var(--lg-node-border);
-  border-radius: 8px;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 0;
 }
 
-/* Minimap */
+/* Minimap - ComfyUI style */
 .litegraph .litegraph-minimap {
-  background-color: var(--lg-node-bg);
-  border: 1px solid var(--lg-node-border);
-  border-radius: 8px;
+  background-color: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 0;
 }
 
 /* Dialog styling */
 .litegraph .litegraph-dialog {
-  background-color: var(--lg-node-bg);
-  border: 1px solid var(--lg-node-border);
-  border-radius: 8px;
-  color: var(--lg-text);
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 0;
+  color: var(--lg-widget-text);
+}
+
+/* Group styling - ComfyUI style */
+.litegraph .litegraph-group {
+  border: 2px dashed #555;
+  background-color: rgba(50, 50, 50, 0.3);
+  border-radius: 0;
+}
+
+.litegraph .litegraph-group .title {
+  color: #888;
+  font-size: 24px;
+  font-weight: bold;
 }
 
 /* Progress indicator */
 .litegraph .node-progress {
-  background-color: #3f3f46;
-  border-radius: 4px;
+  background-color: #222;
+  border-radius: 0;
   height: 4px;
   overflow: hidden;
 }
 
 .litegraph .node-progress-bar {
-  background-color: var(--lg-selection);
+  background-color: #5f9;
   height: 100%;
   transition: width 0.3s ease;
+}
+
+/* Scrollbar styling for panels */
+.litegraph ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.litegraph ::-webkit-scrollbar-track {
+  background: #222;
+}
+
+.litegraph ::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 0;
+}
+
+.litegraph ::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
