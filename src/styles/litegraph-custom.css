@@ -144,6 +144,84 @@
   color: var(--lg-widget-text);
 }
 
+/* LiteGraph prompt dialog (text widget editing) - ComfyUI style */
+/* Note: .graphdialog is appended to canvas.parentNode, not inside .litegraph */
+.graphdialog {
+  position: absolute !important;
+  background-color: #202020 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 4px !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
+  z-index: 9999 !important;
+  min-width: 350px !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.graphdialog.rounded {
+  border-radius: 0 !important;
+}
+
+/* Hide the "Value" label - ComfyUI doesn't show it */
+.graphdialog .name {
+  display: none !important;
+}
+
+.graphdialog input,
+.graphdialog textarea {
+  background-color: #222 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: #ddd !important;
+  padding: 8px 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+  outline: none !important;
+  resize: both !important;
+  flex: 1 !important;
+}
+
+.graphdialog textarea {
+  min-height: 150px !important;
+  min-width: 300px !important;
+  max-width: 600px !important;
+}
+
+.graphdialog input:focus,
+.graphdialog textarea:focus {
+  outline: none !important;
+  border: none !important;
+}
+
+.graphdialog button {
+  background-color: #333 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: #ddd !important;
+  padding: 6px 16px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-family: Arial, sans-serif !important;
+  margin: 4px 0 0 0 !important;
+  align-self: flex-start !important;
+}
+
+.graphdialog button:hover {
+  background-color: #444 !important;
+}
+
+.graphdialog button.rounded,
+.graphdialog input.rounded {
+  border-radius: 0 !important;
+}
+
 /* Group styling - ComfyUI style */
 .litegraph .litegraph-group {
   border: 2px dashed #555;
