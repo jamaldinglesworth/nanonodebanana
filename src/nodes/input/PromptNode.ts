@@ -99,6 +99,25 @@ export function PromptNode(this: PromptNodeType) {
     } else {
       ctx.fillText('Click to edit...', bounds.x + 8, bounds.y + 8)
     }
+
+    // Draw character count in bottom-right corner
+    const charCount = text.length
+    const countText = `${charCount} chars`
+    ctx.font = '10px Arial'
+    ctx.textBaseline = 'bottom'
+    ctx.textAlign = 'right'
+
+    // Color coding: gray < 500, yellow 500-1500, red > 1500
+    if (charCount > 1500) {
+      ctx.fillStyle = '#f87171' // Red
+    } else if (charCount > 500) {
+      ctx.fillStyle = '#fbbf24' // Yellow/Amber
+    } else {
+      ctx.fillStyle = '#666' // Gray
+    }
+
+    ctx.fillText(countText, bounds.x + bounds.width - 8, bounds.y + bounds.height - 4)
+    ctx.textAlign = 'left' // Reset alignment
   }
 
   // Check if position is in textarea area

@@ -52,6 +52,7 @@ export const StylePresetNode = createNodeClass(
       style: 'Photorealistic',
       position: 'append',
     },
+    resizable: true,
   },
   async (node: ExecutableNode) => {
     const prompt = getInputValue<string>(node, 'prompt') ?? ''

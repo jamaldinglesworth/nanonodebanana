@@ -10,6 +10,7 @@ import { PropertiesPanel } from './components/PropertiesPanel'
 import { OutputPreview } from './components/OutputPreview'
 import { SaveLoadDialog } from './components/SaveLoadDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { ImageModal } from './components/ImageModal'
 import { ErrorBoundary, CanvasErrorBoundary } from './components/ErrorBoundary'
 import { GraphProvider } from './context/GraphContext'
 import { ExecutionProvider } from './context/ExecutionContext'
@@ -145,6 +146,9 @@ function AppContent() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+
+      {/* Fullscreen image modal */}
+      <ImageModal />
 
       {/* Keyboard shortcuts hint */}
       <div className="fixed bottom-4 right-4 opacity-0 hover:opacity-100 transition-opacity">

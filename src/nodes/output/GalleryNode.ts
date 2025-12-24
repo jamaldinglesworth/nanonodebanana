@@ -36,6 +36,7 @@ export const GalleryNode = createNodeClass(
       selectedIndex: 0,
       columns: 2,
     },
+    resizable: true,
   },
   async (node: ExecutableNode) => {
     const image1 = getInputValue<string>(node, 'image_1')

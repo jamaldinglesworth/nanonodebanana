@@ -26,6 +26,7 @@ export const NumberNode = createNodeClass(
     properties: {
       value: 0,
     },
+    resizable: true,
   },
   async (node: ExecutableNode) => {
     const value = getWidgetValue<number>(node, 'value') ?? 0

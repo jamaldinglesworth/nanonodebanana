@@ -31,6 +31,7 @@ export const CombinePromptsNode = createNodeClass(
     properties: {
       separator: ', ',
     },
+    resizable: true,
   },
   async (node: ExecutableNode) => {
     const prompt1 = getInputValue<string>(node, 'prompt_1') ?? ''

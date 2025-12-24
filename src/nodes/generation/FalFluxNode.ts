@@ -76,6 +76,8 @@ export const FalFluxNode = createNodeClass(
       executionTime: 0,
       resultSeed: 0,
     },
+    resizable: true,
+    showProgressIndicator: true,
   },
   async (node: ExecutableNode) => {
     const prompt = getInputValue<string>(node, 'prompt')

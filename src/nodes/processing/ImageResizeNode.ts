@@ -51,6 +51,7 @@ export const ImageResizeNode = createNodeClass(
       height: 512,
       mode: 'contain',
     },
+    resizable: true,
   },
   async (node: ExecutableNode) => {
     const imageBase64 = getInputValue<string>(node, 'image')

@@ -32,6 +32,20 @@ export interface NodeConfig {
   previewHeight?: number
   /** Widget name to use for dynamic preview height (overrides previewHeight) */
   dynamicPreviewHeight?: string
+
+  /** Enable node resizing (default: false, automatically true for image preview nodes) */
+  resizable?: boolean
+
+  /** Resize constraints for the node */
+  resizeConstraints?: {
+    minWidth?: number
+    minHeight?: number
+    maxWidth?: number
+    maxHeight?: number
+  }
+
+  /** Show progress indicator bar below title (for generator nodes) */
+  showProgressIndicator?: boolean
 }
 
 // Image cache to avoid reloading images on every render
@@ -98,6 +112,14 @@ export interface ExecutableNode extends LGraphNode {
   executionProgress?: number
   executionError?: Error
   executionResult?: unknown
+  resizable?: boolean
+  onResize?: (size: [number, number]) => void
+
+  /** Internal flag to prevent circular updates between resize and widget sync */
+  _isResizing?: boolean
+
+  /** Minimum size calculated from content (slots + widgets) */
+  _minSize?: [number, number]
 
   /**
    * Called when the node should execute its logic.
@@ -145,35 +167,35 @@ export function createNodeClass(
       for (const widget of config.widgets) {
         switch (widget.type) {
           case 'text':
-            this.addWidget('text', widget.name, widget.defaultValue ?? '', () => {}, widget.options)
+            this.addWidget('text', widget.name, widget.defaultValue ?? '', () => { }, widget.options)
             break
           case 'textarea':
-            this.addWidget('text', widget.name, widget.defaultValue ?? '', () => {}, {
+            this.addWidget('text', widget.name, widget.defaultValue ?? '', () => { }, {
               ...widget.options,
               multiline: true,
             })
             break
           case 'number':
-            this.addWidget('number', widget.name, widget.defaultValue ?? 0, () => {}, widget.options)
+            this.addWidget('number', widget.name, widget.defaultValue ?? 0, () => { }, widget.options)
             break
           case 'combo':
             this.addWidget(
               'combo',
               widget.name,
               widget.defaultValue ?? '',
-              () => {},
+              () => { },
               { values: widget.options?.values ?? [] }
             )
             break
           case 'toggle':
-            this.addWidget('toggle', widget.name, widget.defaultValue ?? false, () => {}, widget.options)
+            this.addWidget('toggle', widget.name, widget.defaultValue ?? false, () => { }, widget.options)
             break
           case 'slider':
             this.addWidget(
               'slider',
               widget.name,
               widget.defaultValue ?? 0,
-              () => {},
+              () => { },
               widget.options
             )
             break
@@ -202,6 +224,51 @@ export function createNodeClass(
     this.executionError = undefined
     this.executionResult = undefined
 
+    // Calculate minimum size from content (title height + slots + widgets + padding)
+    const NODE_TITLE_HEIGHT = 26
+    const NODE_SLOT_HEIGHT = 20
+    const NODE_WIDGET_HEIGHT = 30
+    const inputCount = config.inputs?.length ?? 0
+    const outputCount = config.outputs?.length ?? 0
+    const widgetCount = config.widgets?.length ?? 0
+    const slotCount = Math.max(inputCount, outputCount)
+
+    const calculatedMinHeight = NODE_TITLE_HEIGHT + (slotCount * NODE_SLOT_HEIGHT) + (widgetCount * NODE_WIDGET_HEIGHT) + 20
+    const calculatedMinWidth = 180 // Minimum width for readability
+
+    // Apply configured constraints or use calculated values
+    const minWidth = config.resizeConstraints?.minWidth ?? calculatedMinWidth
+    const minHeight = config.resizeConstraints?.minHeight ?? calculatedMinHeight
+    const maxWidth = config.resizeConstraints?.maxWidth ?? 1200
+    const maxHeight = config.resizeConstraints?.maxHeight ?? 1200
+
+    // Store minimum size on node for reference
+    this._minSize = [minWidth, minHeight]
+    this._isResizing = false
+
+    // Enable resize if explicitly set or if using image preview
+    if (config.resizable || config.showImagePreview) {
+      this.resizable = true
+
+      // Add resize handler with constraint enforcement (unless overridden by image preview)
+      if (!config.showImagePreview) {
+        this.onResize = function (size: [number, number]) {
+          // Prevent circular updates
+          if (this._isResizing) return
+          this._isResizing = true
+
+          // Enforce constraints
+          if (size[0] < minWidth) size[0] = minWidth
+          if (size[1] < minHeight) size[1] = minHeight
+          if (size[0] > maxWidth) size[0] = maxWidth
+          if (size[1] > maxHeight) size[1] = maxHeight
+
+          this._isResizing = false
+          this.setDirtyCanvas?.(true, true)
+        }
+      }
+    }
+
     // Add execute function if provided
     if (executeFunction) {
       this.onExecute = async () => {
@@ -223,6 +290,62 @@ export function createNodeClass(
       }
     }
 
+    // Add progress indicator for generator nodes (when not using image preview)
+    if (config.showProgressIndicator && !config.showImagePreview) {
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const progressNodeRef = this
+
+      this.onDrawForeground = function (ctx: CanvasRenderingContext2D) {
+        const status = progressNodeRef.executionStatus
+        if (!status || status === 'idle') return
+
+        // Progress bar dimensions - thin bar just below title
+        const barHeight = 3
+        const barY = 24 // Just below the title bar
+        const barWidth = progressNodeRef.size[0] - 4
+        const barX = 2
+
+        // Draw background track
+        ctx.fillStyle = '#333'
+        ctx.beginPath()
+        ctx.roundRect(barX, barY, barWidth, barHeight, 1.5)
+        ctx.fill()
+
+        // Determine color and progress based on status
+        let progressColor = '#3b82f6' // Blue for running
+        let progressWidth = barWidth * 0.5 // Indeterminate animation
+
+        if (status === 'running') {
+          progressColor = '#3b82f6' // Blue
+          // Animate progress for running state (indeterminate)
+          const time = Date.now() / 1000
+          const offset = (Math.sin(time * 3) + 1) / 2 // 0 to 1
+          progressWidth = barWidth * 0.3
+          const progressX = barX + (barWidth - progressWidth) * offset
+          ctx.fillStyle = progressColor
+          ctx.beginPath()
+          ctx.roundRect(progressX, barY, progressWidth, barHeight, 1.5)
+          ctx.fill()
+          // Request redraw for animation
+          progressNodeRef.setDirtyCanvas?.(true, false)
+        } else if (status === 'completed') {
+          progressColor = '#22c55e' // Green
+          progressWidth = barWidth
+          ctx.fillStyle = progressColor
+          ctx.beginPath()
+          ctx.roundRect(barX, barY, progressWidth, barHeight, 1.5)
+          ctx.fill()
+        } else if (status === 'error') {
+          progressColor = '#ef4444' // Red
+          progressWidth = barWidth
+          ctx.fillStyle = progressColor
+          ctx.beginPath()
+          ctx.roundRect(barX, barY, progressWidth, barHeight, 1.5)
+          ctx.fill()
+        }
+      }
+    }
+
     // Add image preview support
     if (config.showImagePreview) {
       const staticPreviewHeight = config.previewHeight ?? 150
@@ -235,7 +358,7 @@ export function createNodeClass(
       const baseHeight = 26 + (config.inputs?.length ?? 0) * 20 + (config.widgets?.length ?? 0) * 30
 
       // Override onDrawForeground to render images
-      this.onDrawForeground = function(ctx: CanvasRenderingContext2D) {
+      this.onDrawForeground = function (ctx: CanvasRenderingContext2D) {
         // Get preview height from widget or use static value
         let previewHeight = staticPreviewHeight
         if (dynamicHeightWidget) {
@@ -259,7 +382,7 @@ export function createNodeClass(
 
           // Ensure node height accommodates preview area
           const requiredHeight = baseHeight + previewHeight + 20
-          if (nodeRef.size[1] !== requiredHeight) {
+          if (nodeRef.size[1] < requiredHeight) {
             nodeRef.size[1] = requiredHeight
             nodeRef.setDirtyCanvas?.(true, true)
           }
@@ -311,11 +434,10 @@ export function createNodeClass(
           ctx.roundRect(drawX, y, drawWidth, drawHeight, radius)
           ctx.stroke()
 
-          // Update node height based on actual preview height
+          // Ensure node height is at least enough for content
           const requiredHeight = baseHeight + previewHeight + 20
-          if (Math.abs(nodeRef.size[1] - requiredHeight) > 5) {
+          if (nodeRef.size[1] < requiredHeight) {
             nodeRef.size[1] = requiredHeight
-            nodeRef.setDirtyCanvas?.(true, true)
           }
         } else {
           // Draw loading indicator
@@ -329,11 +451,98 @@ export function createNodeClass(
 
           // Ensure node height
           const requiredHeight = baseHeight + previewHeight + 20
-          if (nodeRef.size[1] !== requiredHeight) {
+          if (nodeRef.size[1] < requiredHeight) {
             nodeRef.size[1] = requiredHeight
             nodeRef.setDirtyCanvas?.(true, true)
           }
         }
+      }
+
+      // Add onResize handler to sync widgets when manual resizing happens
+      this.onResize = function (size: [number, number]) {
+        // Prevent circular updates
+        if (this._isResizing) return
+        this._isResizing = true
+
+        // Enforce constraints
+        const nodeMinWidth = config.resizeConstraints?.minWidth ?? 180
+        const nodeMinHeight = config.resizeConstraints?.minHeight ?? baseHeight + 50
+        const nodeMaxWidth = config.resizeConstraints?.maxWidth ?? 1200
+        const nodeMaxHeight = config.resizeConstraints?.maxHeight ?? 1200
+
+        if (size[0] < nodeMinWidth) size[0] = nodeMinWidth
+        if (size[1] < nodeMinHeight) size[1] = nodeMinHeight
+        if (size[0] > nodeMaxWidth) size[0] = nodeMaxWidth
+        if (size[1] > nodeMaxHeight) size[1] = nodeMaxHeight
+
+        if (dynamicHeightWidget) {
+          const currentPreviewHeight = Math.max(10, Math.floor(size[1] - baseHeight - 20))
+          const widget = this.widgets?.find(w => w.name === dynamicHeightWidget)
+          if (widget && typeof widget.value === 'number' && Math.abs(widget.value - currentPreviewHeight) > 2) {
+            widget.value = currentPreviewHeight
+            if (this.properties && dynamicHeightWidget in this.properties) {
+              this.setProperty(dynamicHeightWidget, currentPreviewHeight)
+            }
+
+            // Also trigger update on various node events (accessing internal LiteGraph property)
+            const canvas = (this as unknown as { graph?: { list_of_graphcanvas?: Array<{ selected_nodes?: Record<number, unknown>; onNodeSelected?: (node: unknown) => void }> } }).graph?.list_of_graphcanvas?.[0]
+            if (canvas && canvas.selected_nodes && canvas.selected_nodes[this.id]) {
+              canvas.onNodeSelected?.(this)
+            }
+          }
+        }
+
+        this._isResizing = false
+        this.setDirtyCanvas?.(true, true)
+      }
+
+      // Explicitly allow resizing for image preview nodes
+      this.resizable = true
+
+      // Sync widget with property if it changes externally (e.g. from property panel)
+      const originalOnPropertyChanged = this.onPropertyChanged
+      this.onPropertyChanged = function (name, value, prev_value) {
+        if (originalOnPropertyChanged) {
+          originalOnPropertyChanged.call(this, name, value, prev_value)
+        }
+        if (name === dynamicHeightWidget) {
+          const widget = this.widgets?.find(w => w.name === dynamicHeightWidget)
+          if (widget && widget.value !== value) {
+            widget.value = value
+          }
+          this.setDirtyCanvas?.(true, true)
+        }
+      }
+
+      // Add double-click handler to open fullscreen image modal
+      this.onDblClick = function (_e: MouseEvent, pos: [number, number]) {
+        // Check if double-click is on the image preview area
+        const previewY = baseHeight + 10
+        let previewHeight = staticPreviewHeight
+        if (dynamicHeightWidget) {
+          const widget = nodeRef.widgets?.find(w => w.name === dynamicHeightWidget)
+          if (widget && typeof widget.value === 'number') {
+            previewHeight = widget.value
+          }
+        }
+
+        // Check if click is within preview area bounds
+        if (pos[1] >= previewY && pos[1] <= previewY + previewHeight) {
+          const url = nodeRef.properties?.[imageProperty] as string
+          if (url) {
+            // Dispatch custom event to open image modal
+            const event = new CustomEvent('show-image-modal', {
+              detail: {
+                url,
+                title: nodeRef.title,
+                metadata: nodeRef.properties,
+              },
+            })
+            window.dispatchEvent(event)
+            return true
+          }
+        }
+        return false
       }
     }
   }
