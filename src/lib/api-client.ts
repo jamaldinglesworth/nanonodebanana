@@ -7,6 +7,8 @@ import type {
   NanoBananaResponse,
   NanoBananaEditRequest,
   NanoBananaEditResponse,
+  NanoBananaProRequest,
+  NanoBananaProResponse,
   WorkflowData,
 } from '../types/nodes'
 
@@ -74,6 +76,16 @@ export const generateApi = {
    */
   async nanoBananaEdit(request: NanoBananaEditRequest): Promise<NanoBananaEditResponse> {
     return fetchApi<NanoBananaEditResponse>('/generate/nano-banana-edit', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  /**
+   * Generate images using Nano Banana Pro model.
+   */
+  async nanoBananaPro(request: NanoBananaProRequest): Promise<NanoBananaProResponse> {
+    return fetchApi<NanoBananaProResponse>('/generate/nano-banana-pro', {
       method: 'POST',
       body: JSON.stringify(request),
     })

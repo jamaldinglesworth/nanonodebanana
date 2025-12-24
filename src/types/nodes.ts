@@ -187,6 +187,22 @@ export interface NanoBananaEditResponse {
   executionTime: number
 }
 
+export interface NanoBananaProRequest {
+  prompt: string
+  numImages: number
+  resolution: '1K' | '2K' | '4K'
+  aspectRatio: '21:9' | '16:9' | '3:2' | '4:3' | '5:4' | '1:1' | '4:5' | '3:4' | '2:3' | '9:16'
+  outputFormat: 'jpeg' | 'png' | 'webp'
+  enableWebSearch: boolean
+  limitGenerations: boolean
+}
+
+export interface NanoBananaProResponse {
+  images: string[]
+  description?: string
+  executionTime: number
+}
+
 /**
  * Node colour definitions by category (ComfyUI style - neutral grays).
  * ComfyUI uses uniform gray nodes with colorful connection slots.
@@ -221,6 +237,7 @@ export const NODE_TYPE_COLOURS = {
   falVideo: '#333',
   nanoBanana: '#333',
   nanoBananaEdit: '#333',
+  nanoBananaPro: '#333',
 
   // Output nodes - neutral gray
   imageOutput: '#333',
