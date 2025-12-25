@@ -17,6 +17,7 @@ import { ImageBlendNode } from './processing/ImageBlendNode'
 import { ImageAdjustNode } from './processing/ImageAdjustNode'
 import { ImageFilterNode } from './processing/ImageFilterNode'
 import { AnnotationNodeFinal as AnnotationNode } from './processing/AnnotationNode'
+import { SplitGridNode } from './processing/SplitGridNode'
 import { GeminiGeneratorNode } from './generation/GeminiGeneratorNode'
 import { FalFluxNode } from './generation/FalFluxNode'
 import { FalVideoNode } from './generation/FalVideoNode'
@@ -48,6 +49,7 @@ const NODE_PATHS = {
   'processing/adjust': ImageAdjustNode,
   'processing/filter': ImageFilterNode,
   'processing/annotate': AnnotationNode,
+  'processing/split-grid': SplitGridNode,
 
   // Generation nodes
   'generation/gemini': GeminiGeneratorNode,
@@ -107,6 +109,7 @@ export {
   ImageAdjustNode,
   ImageFilterNode,
   AnnotationNode,
+  SplitGridNode,
   GeminiGeneratorNode,
   FalFluxNode,
   FalVideoNode,

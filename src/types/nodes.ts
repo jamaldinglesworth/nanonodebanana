@@ -253,6 +253,7 @@ export const NODE_TYPE_COLOURS = {
   imageBlend: '#333',
   imageAdjust: '#333',
   imageFilter: '#333',
+  splitGrid: '#333',
 
   // Generation nodes - neutral gray
   gemini: '#333',
