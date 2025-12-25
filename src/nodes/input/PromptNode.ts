@@ -6,6 +6,7 @@ interface PromptNodeType extends LGraphNode {
   _textarea?: HTMLTextAreaElement
   _editing: boolean
   resizable?: boolean
+  onResize?: (size: [number, number]) => void
 }
 
 /**
@@ -30,6 +31,18 @@ export function PromptNode(this: PromptNodeType) {
   this.size = [280, 180]
   this.resizable = true
 
+  // Handle resize - skip constraints when collapsed to allow LiteGraph collapse
+  this.onResize = function (size: [number, number]) {
+    // Don't enforce constraints when node is collapsed
+    if (this.flags?.collapsed) return
+
+    // Enforce minimum size for usability
+    const minWidth = 180
+    const minHeight = 100
+    if (size[0] < minWidth) size[0] = minWidth
+    if (size[1] < minHeight) size[1] = minHeight
+  }
+
   // Store reference for callbacks
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const nodeRef = this
@@ -51,6 +64,9 @@ export function PromptNode(this: PromptNodeType) {
 
   // Custom foreground drawing - draws the textarea that fills the node
   this.onDrawForeground = function (ctx: CanvasRenderingContext2D) {
+    // Don't draw content when node is collapsed
+    if (this.flags?.collapsed) return
+
     const bounds = getTextareaBounds()
 
     if (bounds.height < 20) return

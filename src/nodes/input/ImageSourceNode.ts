@@ -5,6 +5,7 @@ import { extractWorkflowFromPngFile, type WorkflowMetadata } from '../../lib/png
 // Extend LGraphNode type for our custom properties
 interface ImageSourceNodeType extends LGraphNode {
   resizable?: boolean
+  onResize?: (size: [number, number]) => void
   _dropZoneRect?: { x: number; y: number; width: number; height: number }
   _isDragOver?: boolean
   _imageLoaded?: HTMLImageElement | null
@@ -35,6 +36,18 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
   this.resizable = true
   this.color = NODE_TYPE_COLOURS.imageSource
   this.bgcolor = adjustBrightness(NODE_TYPE_COLOURS.imageSource, -40)
+
+  // Handle resize - skip constraints when collapsed to allow LiteGraph collapse
+  this.onResize = function (size: [number, number]) {
+    // Don't enforce constraints when node is collapsed
+    if (this.flags?.collapsed) return
+
+    // Enforce minimum size for usability
+    const minWidth = 200
+    const minHeight = 150
+    if (size[0] < minWidth) size[0] = minWidth
+    if (size[1] < minHeight) size[1] = minHeight
+  }
 
   // Store reference for callbacks
   // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -131,6 +144,9 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
 
   // Custom foreground drawing - draws image preview and drop zone
   this.onDrawForeground = function (ctx: CanvasRenderingContext2D) {
+    // Don't draw content when node is collapsed
+    if (this.flags?.collapsed) return
+
     const titleHeight = 26
     const slotHeight = 20
     const widgetHeight = 30
