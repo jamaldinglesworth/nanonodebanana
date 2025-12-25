@@ -97,20 +97,40 @@ function getNodeInputs(
 /**
  * Creates a graph execution engine.
  * Executes nodes in topological order, handling async operations.
+ *
+ * Thread-safety: Uses execution IDs to isolate concurrent runs.
+ * The shared results cache is preserved between partial executions.
  */
 export function createExecutionEngine(): ExecutionEngine {
-  let cancelled = false
+  // Shared state for caching between partial executions
   const results = new Map<string, unknown>()
 
+  // Execution isolation: track current execution to prevent race conditions
+  let currentExecutionId: number | null = null
+  let nextExecutionId = 0
+
+  /**
+   * Check if this execution is still the active one.
+   * Returns false if another execution has started or cancel was called.
+   */
+  function isExecutionActive(executionId: number): boolean {
+    return currentExecutionId === executionId
+  }
+
   async function* execute(graph: LGraph): AsyncGenerator<ExecutionContext> {
-    cancelled = false
+    // Generate unique ID for this execution
+    const executionId = nextExecutionId++
+    currentExecutionId = executionId
+
+    // Clear results only for full execution (partial execution preserves cache)
     results.clear()
 
     const sortedNodes = topologicalSort(graph)
     const nodeResults = new Map<string, Record<string, unknown>>()
 
     for (let i = 0; i < sortedNodes.length; i++) {
-      if (cancelled) break
+      // Check if this execution was cancelled or superseded
+      if (!isExecutionActive(executionId)) break
 
       const node = sortedNodes[i]!
       const nodeId = String(node.id)
@@ -237,7 +257,11 @@ export function createExecutionEngine(): ExecutionEngine {
    * Uses cached results for upstream dependencies.
    */
   async function* executeFromNode(graph: LGraph, startNodeId: number): AsyncGenerator<ExecutionContext> {
-    cancelled = false
+    // Generate unique ID for this execution
+    const executionId = nextExecutionId++
+    currentExecutionId = executionId
+
+    // Note: Don't clear results - partial execution uses cached upstream results
 
     // Get all nodes that need to be executed (startNode and all downstream)
     const sortedNodes = topologicalSort(graph)
@@ -288,7 +312,8 @@ export function createExecutionEngine(): ExecutionEngine {
     }
 
     for (let i = 0; i < nodesToExecute.length; i++) {
-      if (cancelled) break
+      // Check if this execution was cancelled or superseded
+      if (!isExecutionActive(executionId)) break
 
       const node = nodesToExecute[i]!
       const nodeId = String(node.id)
@@ -390,7 +415,11 @@ export function createExecutionEngine(): ExecutionEngine {
    * Execute only a single node using cached inputs from previous executions.
    */
   async function* executeNodeOnly(graph: LGraph, nodeId: number): AsyncGenerator<ExecutionContext> {
-    cancelled = false
+    // Generate unique ID for this execution
+    const executionId = nextExecutionId++
+    currentExecutionId = executionId
+
+    // Note: Don't clear results - single node execution uses cached inputs
 
     const node = graph.getNodeById(nodeId)
     if (!node) {
@@ -499,7 +528,8 @@ export function createExecutionEngine(): ExecutionEngine {
   }
 
   function cancel() {
-    cancelled = true
+    // Setting to null invalidates all active executions
+    currentExecutionId = null
   }
 
   function getResults() {
