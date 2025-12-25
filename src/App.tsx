@@ -11,6 +11,8 @@ import { OutputPreview } from './components/OutputPreview'
 import { SaveLoadDialog } from './components/SaveLoadDialog'
 import { SettingsDialog } from './components/SettingsDialog'
 import { PromptTemplates } from './components/PromptTemplates'
+import { TemplateDialog } from './components/TemplateDialog'
+import type { WorkflowTemplate } from './lib/workflow-templates'
 import { WorkflowDetectedDialog } from './components/WorkflowDetectedDialog'
 import { ImageModal } from './components/ImageModal'
 import { ImageHistory } from './components/ImageHistory'
@@ -37,6 +39,7 @@ function AppContent() {
   const [saveLoadMode, setSaveLoadMode] = useState<'save' | 'load'>('save')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [templatesOpen, setTemplatesOpen] = useState(false)
+  const [workflowTemplatesOpen, setWorkflowTemplatesOpen] = useState(false)
   const [curvedConnections, setCurvedConnections] = useState(true)
 
   // Keyboard shortcuts
@@ -110,6 +113,25 @@ function AppContent() {
     setTemplatesOpen(true)
   }, [])
 
+  // Handle open workflow templates
+  const handleOpenWorkflowTemplates = useCallback(() => {
+    setWorkflowTemplatesOpen(true)
+  }, [])
+
+  // Handle select workflow template
+  const handleSelectWorkflowTemplate = useCallback((template: WorkflowTemplate) => {
+    if (!graph) return
+
+    if (graph._nodes.length > 0) {
+      if (!confirm('Load workflow template? Any unsaved changes will be lost.')) {
+        return
+      }
+    }
+
+    graph.configure(template.graph)
+    canvas?.setDirty(true, true)
+  }, [graph, canvas])
+
   // Handle toggle curved connections
   const handleToggleCurvedConnections = useCallback(() => {
     if (!canvas) return
@@ -156,6 +178,7 @@ function AppContent() {
         onLoad={handleOpenLoad}
         onSettings={handleOpenSettings}
         onTemplates={handleOpenTemplates}
+        onWorkflowTemplates={handleOpenWorkflowTemplates}
         onRun={execute}
         onRunFromSelected={handleRunFromSelected}
         onRunSelectedOnly={handleRunSelectedOnly}
@@ -214,6 +237,12 @@ function AppContent() {
       <PromptTemplates
         isOpen={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
+      />
+
+      <TemplateDialog
+        isOpen={workflowTemplatesOpen}
+        onClose={() => setWorkflowTemplatesOpen(false)}
+        onSelect={handleSelectWorkflowTemplate}
       />
 
       {/* Workflow detected from PNG */}
