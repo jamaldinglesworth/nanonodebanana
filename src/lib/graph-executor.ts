@@ -5,17 +5,28 @@ import { NODE_MODE } from '../nodes/base/BaseNode'
 /**
  * Topologically sorts nodes in the graph for execution order.
  * Ensures dependencies are executed before dependent nodes.
+ *
+ * Uses Kahn's algorithm with O(n + e) complexity where n = nodes, e = edges.
  */
 function topologicalSort(graph: LGraph): LGraphNode[] {
   const nodes = graph._nodes || []
   const visited = new Set<number>()
   const result: LGraphNode[] = []
 
-  // Build adjacency list from connections
+  // Build node ID to node lookup for O(1) access
+  const nodeById = new Map<number, LGraphNode>()
+  for (const node of nodes) {
+    nodeById.set(node.id, node)
+  }
+
+  // Build dependency graph (who does this node depend on)
+  // and reverse adjacency list (who depends on this node) for O(1) lookup
   const dependencies = new Map<number, Set<number>>()
+  const dependents = new Map<number, Set<number>>()
 
   for (const node of nodes) {
     dependencies.set(node.id, new Set())
+    dependents.set(node.id, new Set())
   }
 
   // Find dependencies based on input connections
@@ -26,7 +37,10 @@ function topologicalSort(graph: LGraph): LGraphNode[] {
       if (input.link != null) {
         const linkInfo = graph.links[input.link]
         if (linkInfo) {
+          // node depends on linkInfo.origin_id
           dependencies.get(node.id)?.add(linkInfo.origin_id)
+          // linkInfo.origin_id has node as a dependent
+          dependents.get(linkInfo.origin_id)?.add(node.id)
         }
       }
     }
@@ -45,13 +59,17 @@ function topologicalSort(graph: LGraph): LGraphNode[] {
     result.push(node)
     visited.add(node.id)
 
-    // Find nodes that depend on this one
-    for (const otherNode of nodes) {
-      if (dependencies.get(otherNode.id)?.has(node.id)) {
-        const newDegree = (inDegree.get(otherNode.id) || 1) - 1
-        inDegree.set(otherNode.id, newDegree)
-        if (newDegree === 0 && !visited.has(otherNode.id)) {
-          queue.push(otherNode)
+    // O(1) lookup of nodes that depend on this one
+    const nodeDependents = dependents.get(node.id)
+    if (nodeDependents) {
+      for (const dependentId of nodeDependents) {
+        const newDegree = (inDegree.get(dependentId) || 1) - 1
+        inDegree.set(dependentId, newDegree)
+        if (newDegree === 0 && !visited.has(dependentId)) {
+          const dependentNode = nodeById.get(dependentId)
+          if (dependentNode) {
+            queue.push(dependentNode)
+          }
         }
       }
     }
