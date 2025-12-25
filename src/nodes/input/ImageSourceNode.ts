@@ -7,8 +7,10 @@ interface ImageSourceNodeType extends LGraphNode {
   resizable?: boolean
   onResize?: (size: [number, number]) => void
   _dropZoneRect?: { x: number; y: number; width: number; height: number }
+  _browseButtonRect?: { x: number; y: number; width: number; height: number }
   _isDragOver?: boolean
   _imageLoaded?: HTMLImageElement | null
+  _fileInput?: HTMLInputElement
 }
 
 /**
@@ -52,6 +54,14 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
   // Store reference for callbacks
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const nodeRef = this
+
+  // Create hidden file input for browse functionality
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.accept = 'image/*'
+  fileInput.style.display = 'none'
+  document.body.appendChild(fileInput)
+  nodeRef._fileInput = fileInput
 
   // Image cache
   let cachedImage: HTMLImageElement | null = null
@@ -128,6 +138,17 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
     }
     reader.readAsDataURL(file)
   }
+
+  // Handle file input change (browse button)
+  fileInput.addEventListener('change', (e) => {
+    const target = e.target as HTMLInputElement
+    const file = target.files?.[0]
+    if (file) {
+      processFile(file)
+    }
+    // Reset input so same file can be selected again
+    target.value = ''
+  })
 
   // Handle detected workflow metadata
   const handleWorkflowMetadata = (metadata: WorkflowMetadata, fileName: string) => {
@@ -245,11 +266,46 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
 
-      ctx.fillText('Drop image here', nodeRef.size[0] / 2, dropZoneY + dropZoneHeight / 2 - 10)
-      ctx.fillText('or paste from clipboard', nodeRef.size[0] / 2, dropZoneY + dropZoneHeight / 2 + 10)
+      ctx.fillText('Drop image, paste,', nodeRef.size[0] / 2, dropZoneY + dropZoneHeight / 2 - 25)
+      ctx.fillText('or use Browse button', nodeRef.size[0] / 2, dropZoneY + dropZoneHeight / 2 - 5)
 
       ctx.textAlign = 'left'
     }
+
+    // Draw Browse button at the bottom of drop zone
+    const buttonWidth = 80
+    const buttonHeight = 26
+    const buttonX = (nodeRef.size[0] - buttonWidth) / 2
+    const buttonY = dropZoneY + dropZoneHeight - buttonHeight - 10
+
+    // Store button rect for click detection
+    nodeRef._browseButtonRect = {
+      x: buttonX,
+      y: buttonY,
+      width: buttonWidth,
+      height: buttonHeight,
+    }
+
+    // Draw button background
+    ctx.fillStyle = '#3b82f6'
+    ctx.beginPath()
+    ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 4)
+    ctx.fill()
+
+    // Draw button border
+    ctx.strokeStyle = '#60a5fa'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 4)
+    ctx.stroke()
+
+    // Draw button text
+    ctx.fillStyle = '#fff'
+    ctx.font = '12px Arial'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('Browse', nodeRef.size[0] / 2, buttonY + buttonHeight / 2)
+    ctx.textAlign = 'left'
 
     // Ensure minimum height
     const requiredHeight = dropZoneY + dropZoneHeight + padding
@@ -264,6 +320,26 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
     nodeRef._isDragOver = false
     nodeRef.setDirtyCanvas(true, true)
     return true
+  }
+
+  // Handle mouse click on browse button
+  this.onMouseDown = function (_e: MouseEvent, pos: [number, number]) {
+    // Check if click is on the browse button
+    const buttonRect = nodeRef._browseButtonRect
+    if (buttonRect) {
+      const isInButton =
+        pos[0] >= buttonRect.x &&
+        pos[0] <= buttonRect.x + buttonRect.width &&
+        pos[1] >= buttonRect.y &&
+        pos[1] <= buttonRect.y + buttonRect.height
+
+      if (isInButton) {
+        // Trigger file input click
+        nodeRef._fileInput?.click()
+        return true // Consume the event
+      }
+    }
+    return false
   }
 
   // Handle paste event when node is selected
@@ -294,9 +370,13 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
     document.addEventListener('paste', handlePaste)
   }
 
-  // Remove paste listener when node is removed
+  // Remove paste listener and file input when node is removed
   this.onRemoved = function () {
     document.removeEventListener('paste', handlePaste)
+    // Clean up the hidden file input
+    if (nodeRef._fileInput && nodeRef._fileInput.parentNode) {
+      nodeRef._fileInput.parentNode.removeChild(nodeRef._fileInput)
+    }
   }
 
   // Execute function - outputs the image
@@ -328,7 +408,7 @@ function adjustBrightness(hex: string, amount: number): string {
 
 // Static properties for LiteGraph registration
 ImageSourceNode.title = 'Image Source'
-ImageSourceNode.desc = 'Image upload with drag-and-drop and clipboard paste'
+ImageSourceNode.desc = 'Image upload with browse, drag-and-drop and clipboard paste'
 // Additional metadata for dynamic UI generation
 ;(ImageSourceNode as unknown as Record<string, unknown>).nodeCategory = 'input'
 ;(ImageSourceNode as unknown as Record<string, unknown>).nodeColour = NODE_TYPE_COLOURS.imageSource
