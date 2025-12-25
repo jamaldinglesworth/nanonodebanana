@@ -467,6 +467,9 @@ export function createNodeClass(
       const progressNodeRef = this
 
       this.onDrawForeground = function (ctx: CanvasRenderingContext2D) {
+        // Don't draw progress indicator when node is collapsed
+        if (this.flags?.collapsed) return
+
         const status = progressNodeRef.executionStatus
         if (!status || status === 'idle') return
 
@@ -587,6 +590,9 @@ export function createNodeClass(
 
       // Override onDrawForeground to render images
       this.onDrawForeground = function (ctx: CanvasRenderingContext2D) {
+        // Don't draw preview when node is collapsed
+        if (this.flags?.collapsed) return
+
         // Get preview height from widget or use static value
         let previewHeight = staticPreviewHeight
         if (dynamicHeightWidget) {
