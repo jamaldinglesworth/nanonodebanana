@@ -1,5 +1,6 @@
 import type { LGraphNode, LGraphCanvas } from 'litegraph.js'
 import type { NodeCategory, ExecutionStatus } from '../../types/nodes'
+import { getCachedBlobUrl } from '../../lib/image-utils'
 
 /**
  * Node class with metadata exposed as static properties.
@@ -119,27 +120,14 @@ const loadingImages = new Set<string>()
 /**
  * Load an image and cache it.
  * Supports URLs, data URLs, and raw base64 strings.
+ * Uses blob URLs for base64 images for better performance with large images.
  */
 function loadImage(url: string): HTMLImageElement | null {
   if (!url) return null
 
-  // Convert raw base64 to data URL if needed
-  let src = url
-  if (!url.startsWith('http') && !url.startsWith('data:') && !url.startsWith('blob:')) {
-    // Assume it's raw base64 data - detect format from magic bytes
-    if (url.startsWith('/9j/')) {
-      src = `data:image/jpeg;base64,${url}`
-    } else if (url.startsWith('iVBORw')) {
-      src = `data:image/png;base64,${url}`
-    } else if (url.startsWith('R0lGOD')) {
-      src = `data:image/gif;base64,${url}`
-    } else if (url.startsWith('UklGR')) {
-      src = `data:image/webp;base64,${url}`
-    } else {
-      // Default to PNG
-      src = `data:image/png;base64,${url}`
-    }
-  }
+  // Convert base64 to blob URL for better performance with large images
+  // Blob URLs are much more memory-efficient than data URLs
+  const src = getCachedBlobUrl(url)
 
   // Return cached image if available
   const cached = imageCache.get(src)

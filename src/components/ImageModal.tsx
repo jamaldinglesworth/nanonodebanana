@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { getCachedBlobUrl } from '../lib/image-utils'
 
 interface ImageModalData {
   url: string
@@ -55,24 +56,14 @@ export function ImageModal() {
     }
   }, [isOpen, handleKeyDown])
 
-  if (!isOpen || !imageData) return null
+  // Convert base64 to blob URL for better performance with large images
+  // useMemo ensures we only convert when the URL changes
+  const imageSrc = useMemo(() => {
+    if (!imageData?.url) return ''
+    return getCachedBlobUrl(imageData.url)
+  }, [imageData?.url])
 
-  // Build full image URL
-  let imageSrc = imageData.url
-  if (imageSrc && !imageSrc.startsWith('http') && !imageSrc.startsWith('data:') && !imageSrc.startsWith('blob:')) {
-    // Assume base64 - detect format
-    if (imageSrc.startsWith('/9j/')) {
-      imageSrc = `data:image/jpeg;base64,${imageSrc}`
-    } else if (imageSrc.startsWith('iVBORw')) {
-      imageSrc = `data:image/png;base64,${imageSrc}`
-    } else if (imageSrc.startsWith('R0lGOD')) {
-      imageSrc = `data:image/gif;base64,${imageSrc}`
-    } else if (imageSrc.startsWith('UklGR')) {
-      imageSrc = `data:image/webp;base64,${imageSrc}`
-    } else {
-      imageSrc = `data:image/png;base64,${imageSrc}`
-    }
-  }
+  if (!isOpen || !imageData) return null
 
   // Format metadata for display
   const formatMetadata = (metadata: Record<string, unknown>) => {
