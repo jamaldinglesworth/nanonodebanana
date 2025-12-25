@@ -1,4 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react'
+import { STORAGE_KEYS } from '../lib/constants'
 
 interface Props {
   children: ReactNode
@@ -114,7 +115,7 @@ export class CanvasErrorBoundary extends ErrorBoundary {
               <button
                 onClick={() => {
                   // Try to recover autosave
-                  const autosave = localStorage.getItem('nanonodebanana_autosave')
+                  const autosave = localStorage.getItem(STORAGE_KEYS.AUTOSAVE)
                   if (autosave) {
                     console.log('Autosave data found:', autosave)
                     alert('Autosave data found in console. Please copy it before reloading.')

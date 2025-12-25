@@ -6,6 +6,7 @@ import {
   useEffect,
   type ReactNode,
 } from 'react'
+import { STORAGE_KEYS } from '../lib/constants'
 
 /**
  * Represents a single image entry in the history.
@@ -30,7 +31,6 @@ interface ImageHistoryState {
   maxImages: number
 }
 
-const STORAGE_KEY = 'nanonodebanana_image_history'
 const MAX_IMAGES = 100
 
 const ImageHistoryContext = createContext<ImageHistoryState | undefined>(undefined)
@@ -47,7 +47,7 @@ export function ImageHistoryProvider({ children }: ImageHistoryProviderProps) {
   const [images, setImages] = useState<HistoryImage[]>(() => {
     // Load from localStorage on initial render
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
+      const stored = localStorage.getItem(STORAGE_KEYS.IMAGE_HISTORY)
       if (stored) {
         const parsed = JSON.parse(stored)
         // Validate and return stored images
@@ -70,7 +70,7 @@ export function ImageHistoryProvider({ children }: ImageHistoryProviderProps) {
         // Keep image URLs (they're usually blob: or short data URIs)
         // For large base64, we'd need IndexedDB (future enhancement)
       }))
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore))
+      localStorage.setItem(STORAGE_KEYS.IMAGE_HISTORY, JSON.stringify(toStore))
     } catch {
       // localStorage quota exceeded - silently fail
       // Future: migrate to IndexedDB for larger storage
@@ -100,7 +100,7 @@ export function ImageHistoryProvider({ children }: ImageHistoryProviderProps) {
 
   const clearHistory = useCallback(() => {
     setImages([])
-    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(STORAGE_KEYS.IMAGE_HISTORY)
   }, [])
 
   const value: ImageHistoryState = {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { STORAGE_KEYS } from '../lib/constants'
 
 interface SettingsDialogProps {
   isOpen: boolean
@@ -29,7 +30,6 @@ const DEFAULT_SETTINGS: Settings = {
   gridSize: 10,
 }
 
-const STORAGE_KEY = 'nanonodebanana_settings'
 
 /**
  * Settings dialog for configuring the workflow editor.
@@ -42,7 +42,7 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
 
   // Load settings on mount
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS)
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
@@ -55,7 +55,7 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
 
   // Handle save
   const handleSave = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings))
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }, [settings])
@@ -64,7 +64,7 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
   const handleReset = useCallback(() => {
     if (confirm('Reset all settings to defaults?')) {
       setSettings(DEFAULT_SETTINGS)
-      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(STORAGE_KEYS.SETTINGS)
     }
   }, [])
 
@@ -336,7 +336,7 @@ export function useSettings(): Settings {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS)
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
@@ -348,7 +348,7 @@ export function useSettings(): Settings {
 
     // Listen for storage changes
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
+      if (e.key === STORAGE_KEYS.SETTINGS && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue)
           setSettings({ ...DEFAULT_SETTINGS, ...parsed })

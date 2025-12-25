@@ -5,6 +5,8 @@
  * Templates can contain variables like {subject} that are replaced at insertion time.
  */
 
+import { STORAGE_KEYS } from './constants'
+
 export interface PromptTemplate {
   id: string
   name: string
@@ -312,14 +314,12 @@ export const BUILT_IN_TEMPLATES: PromptTemplate[] = [
   },
 ]
 
-const STORAGE_KEY = 'nanonodebanana_prompt_templates'
-
 /**
  * Load user-created templates from localStorage.
  */
 export function loadUserTemplates(): PromptTemplate[] {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_KEYS.PROMPT_TEMPLATES)
     if (!stored) return []
     return JSON.parse(stored)
   } catch {
@@ -333,7 +333,7 @@ export function loadUserTemplates(): PromptTemplate[] {
  */
 export function saveUserTemplates(templates: PromptTemplate[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(templates))
+    localStorage.setItem(STORAGE_KEYS.PROMPT_TEMPLATES, JSON.stringify(templates))
   } catch (error) {
     console.error('Failed to save user templates:', error)
   }

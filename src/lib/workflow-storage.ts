@@ -1,10 +1,12 @@
 import type { LGraph } from 'litegraph.js'
 import type { WorkflowData } from '../types/nodes'
 import { workflowApi } from './api-client'
-
-const LOCAL_STORAGE_KEY = 'nanonodebanana_current_workflow'
-const AUTOSAVE_KEY = 'nanonodebanana_autosave'
-const MAX_AUTOSAVE_SIZE = 2 * 1024 * 1024 // 2MB limit for autosave
+import {
+  STORAGE_KEYS,
+  SIZE_LIMITS,
+  AUTOSAVE_PLACEHOLDER,
+  isDataUri,
+} from './constants'
 
 /**
  * Serialises a Litegraph graph to a JSON-compatible object.
@@ -26,7 +28,7 @@ function stripLargeDataFromGraph(graphData: object): object {
       if (node.widgets_values && Array.isArray(node.widgets_values)) {
         node.widgets_values = node.widgets_values.map((value: unknown) => {
           if (typeof value === 'string' && isLargeBase64(value)) {
-            return '[IMAGE_DATA_STRIPPED_FOR_AUTOSAVE]'
+            return AUTOSAVE_PLACEHOLDER
           }
           return value
         })
@@ -37,7 +39,7 @@ function stripLargeDataFromGraph(graphData: object): object {
         for (const key of Object.keys(node.properties)) {
           const value = node.properties[key]
           if (typeof value === 'string' && isLargeBase64(value)) {
-            node.properties[key] = '[IMAGE_DATA_STRIPPED_FOR_AUTOSAVE]'
+            node.properties[key] = AUTOSAVE_PLACEHOLDER
           }
         }
       }
@@ -51,10 +53,8 @@ function stripLargeDataFromGraph(graphData: object): object {
  * Checks if a string is a large base64-encoded data string.
  */
 function isLargeBase64(value: string): boolean {
-  // Check for data URI pattern or raw base64 that's larger than 10KB
-  const isDataUri = value.startsWith('data:')
-  const isLongString = value.length > 10000
-  return isDataUri && isLongString
+  // Check for data URI pattern or raw base64 that's larger than threshold
+  return isDataUri(value) && value.length > SIZE_LIMITS.LARGE_STRING_THRESHOLD
 }
 
 /**
@@ -100,17 +100,17 @@ export function saveToLocalStorage(graph: LGraph, name: string): boolean {
   const jsonData = JSON.stringify(data)
 
   // If data is too large, try stripping image data first
-  if (jsonData.length > MAX_AUTOSAVE_SIZE) {
+  if (jsonData.length > SIZE_LIMITS.MAX_AUTOSAVE_SIZE) {
     const strippedData = {
       name,
       graph: stripLargeDataFromGraph(graphData),
       savedAt: new Date().toISOString(),
       stripped: true,
     }
-    return safeSetLocalStorage(LOCAL_STORAGE_KEY, JSON.stringify(strippedData))
+    return safeSetLocalStorage(STORAGE_KEYS.CURRENT_WORKFLOW, JSON.stringify(strippedData))
   }
 
-  return safeSetLocalStorage(LOCAL_STORAGE_KEY, jsonData)
+  return safeSetLocalStorage(STORAGE_KEYS.CURRENT_WORKFLOW, jsonData)
 }
 
 /**
@@ -121,7 +121,7 @@ export function loadFromLocalStorage(): {
   graph: object
   savedAt: string
 } | null {
-  const data = localStorage.getItem(LOCAL_STORAGE_KEY)
+  const data = localStorage.getItem(STORAGE_KEYS.CURRENT_WORKFLOW)
   if (!data) return null
 
   try {
@@ -135,7 +135,7 @@ export function loadFromLocalStorage(): {
  * Clears the current workflow from local storage.
  */
 export function clearLocalStorage(): void {
-  localStorage.removeItem(LOCAL_STORAGE_KEY)
+  localStorage.removeItem(STORAGE_KEYS.CURRENT_WORKFLOW)
 }
 
 /**
@@ -184,15 +184,15 @@ export function enableAutosave(graph: LGraph, name: string): () => void {
     const jsonData = JSON.stringify(data)
 
     // Skip autosave silently if data is too large
-    if (jsonData.length > MAX_AUTOSAVE_SIZE) {
+    if (jsonData.length > SIZE_LIMITS.MAX_AUTOSAVE_SIZE) {
       return
     }
 
-    const success = safeSetLocalStorage(AUTOSAVE_KEY, jsonData)
+    const success = safeSetLocalStorage(STORAGE_KEYS.AUTOSAVE, jsonData)
     if (!success) {
       // Try to clear old autosave and retry
-      localStorage.removeItem(AUTOSAVE_KEY)
-      safeSetLocalStorage(AUTOSAVE_KEY, jsonData)
+      localStorage.removeItem(STORAGE_KEYS.AUTOSAVE)
+      safeSetLocalStorage(STORAGE_KEYS.AUTOSAVE, jsonData)
     }
 
     // Update hash only on successful save
@@ -210,7 +210,7 @@ export function loadAutosave(): {
   graph: object
   savedAt: string
 } | null {
-  const data = localStorage.getItem(AUTOSAVE_KEY)
+  const data = localStorage.getItem(STORAGE_KEYS.AUTOSAVE)
   if (!data) return null
 
   try {
@@ -224,7 +224,7 @@ export function loadAutosave(): {
  * Clears the autosave data.
  */
 export function clearAutosave(): void {
-  localStorage.removeItem(AUTOSAVE_KEY)
+  localStorage.removeItem(STORAGE_KEYS.AUTOSAVE)
 }
 
 /**

@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react'
 import type { LGraph, LGraphCanvas, LiteGraph as LiteGraphType } from 'litegraph.js'
+import { NODE_PATHS } from '../lib/constants'
 
 interface ClipboardOptions {
   graph: LGraph | null
@@ -38,7 +39,7 @@ export function useClipboard({ graph, canvas, liteGraph, onNodeCreated }: Clipbo
     const centerY = (canvas.canvas.height / 2 - canvas.ds.offset[1]) / canvas.ds.scale
 
     // Create ImageSource node
-    const node = liteGraph.createNode('input/image')
+    const node = liteGraph.createNode(NODE_PATHS.IMAGE_SOURCE)
     if (!node) return
 
     node.pos = [centerX - 100, centerY - 75]
@@ -115,7 +116,7 @@ export function useClipboard({ graph, canvas, liteGraph, onNodeCreated }: Clipbo
       const centerX = (canvas.canvas.width / 2 - canvas.ds.offset[0]) / canvas.ds.scale
       const centerY = (canvas.canvas.height / 2 - canvas.ds.offset[1]) / canvas.ds.scale
 
-      const node = liteGraph.createNode('input/image')
+      const node = liteGraph.createNode(NODE_PATHS.IMAGE_SOURCE)
       if (node) {
         node.pos = [centerX - 100, centerY - 75]
         node.properties = { ...node.properties, url: trimmed, source: 'url' }
@@ -131,7 +132,7 @@ export function useClipboard({ graph, canvas, liteGraph, onNodeCreated }: Clipbo
     const centerX = (canvas.canvas.width / 2 - canvas.ds.offset[0]) / canvas.ds.scale
     const centerY = (canvas.canvas.height / 2 - canvas.ds.offset[1]) / canvas.ds.scale
 
-    const node = liteGraph.createNode('input/prompt')
+    const node = liteGraph.createNode(NODE_PATHS.PROMPT)
     if (node) {
       node.pos = [centerX - 150, centerY - 60]
       node.properties = { ...node.properties, text: trimmed }

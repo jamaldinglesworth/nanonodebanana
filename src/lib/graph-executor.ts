@@ -1,6 +1,7 @@
 import type { LGraph, LGraphNode } from 'litegraph.js'
 import type { ExecutionContext, ExecutionEngine } from '../types/nodes'
 import { NODE_MODE } from '../nodes/base/BaseNode'
+import { ERROR_MESSAGES } from './constants'
 
 /**
  * Topologically sorts nodes in the graph for execution order.
@@ -289,7 +290,7 @@ export function createExecutionEngine(): ExecutionEngine {
       yield {
         nodeId: String(startNodeId),
         status: 'error',
-        error: new Error(`Node ${startNodeId} not found in graph`),
+        error: new Error(ERROR_MESSAGES.NODE_NOT_FOUND(startNodeId)),
       }
       return
     }
@@ -444,7 +445,7 @@ export function createExecutionEngine(): ExecutionEngine {
       yield {
         nodeId: String(nodeId),
         status: 'error',
-        error: new Error(`Node ${nodeId} not found in graph`),
+        error: new Error(ERROR_MESSAGES.NODE_NOT_FOUND(nodeId)),
       }
       return
     }

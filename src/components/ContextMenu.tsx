@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
+import { NODE_PATHS } from '../lib/constants'
 
 interface ContextMenuItem {
   id: string
@@ -309,14 +310,14 @@ export function getCanvasContextMenuItems(options: {
       id: 'add-node',
       label: 'Add Node',
       submenu: [
-        { id: 'add-prompt', label: 'Prompt', onClick: () => options.onAddNode?.('input/prompt') },
-        { id: 'add-image', label: 'Image Source', onClick: () => options.onAddNode?.('input/image') },
-        { id: 'add-seed', label: 'Seed', onClick: () => options.onAddNode?.('input/seed') },
+        { id: 'add-prompt', label: 'Prompt', onClick: () => options.onAddNode?.(NODE_PATHS.PROMPT) },
+        { id: 'add-image', label: 'Image Source', onClick: () => options.onAddNode?.(NODE_PATHS.IMAGE_SOURCE) },
+        { id: 'add-seed', label: 'Seed', onClick: () => options.onAddNode?.(NODE_PATHS.SEED) },
         { id: 'sep', label: '', separator: true },
-        { id: 'add-fal', label: 'Fal Flux', onClick: () => options.onAddNode?.('generation/fal-flux') },
-        { id: 'add-gemini', label: 'Gemini', onClick: () => options.onAddNode?.('generation/gemini') },
+        { id: 'add-fal', label: 'Fal Flux', onClick: () => options.onAddNode?.(NODE_PATHS.FAL_FLUX) },
+        { id: 'add-gemini', label: 'Gemini', onClick: () => options.onAddNode?.(NODE_PATHS.GEMINI) },
         { id: 'sep2', label: '', separator: true },
-        { id: 'add-output', label: 'Image Output', onClick: () => options.onAddNode?.('output/image') },
+        { id: 'add-output', label: 'Image Output', onClick: () => options.onAddNode?.(NODE_PATHS.IMAGE_OUTPUT) },
       ],
     },
   ]

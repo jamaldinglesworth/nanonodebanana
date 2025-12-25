@@ -6,8 +6,9 @@
  * We use a custom tEXt chunk to store workflow JSON.
  */
 
+import { PNG_WORKFLOW_KEY } from './constants'
+
 const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
-const WORKFLOW_KEY = 'nanonodebanana:workflow'
 
 /**
  * CRC32 calculation for PNG chunks
@@ -186,7 +187,7 @@ export function extractWorkflowFromPng(pngData: Uint8Array): WorkflowMetadata | 
     for (const chunk of chunks) {
       if (chunk.type === 'tEXt') {
         const textData = parseTextChunk(chunk.data)
-        if (textData && textData.key === WORKFLOW_KEY) {
+        if (textData && textData.key === PNG_WORKFLOW_KEY) {
           return JSON.parse(textData.value)
         }
       }
@@ -244,7 +245,7 @@ export function embedWorkflowInPng(
 
   // Create metadata JSON
   const metadataJson = JSON.stringify(metadata)
-  const textChunk = createTextChunk(WORKFLOW_KEY, metadataJson)
+  const textChunk = createTextChunk(PNG_WORKFLOW_KEY, metadataJson)
 
   // Build new PNG: everything before IEND + our chunk + IEND
   const beforeIend = pngData.slice(0, iendChunk.offset)

@@ -6,8 +6,7 @@ import { useClipboard } from '../hooks/useClipboard'
 import { registerAllNodes } from '../nodes'
 import { loadAutosave, enableAutosave, serialiseGraph } from '../lib/workflow-storage'
 import { Minimap } from './Minimap'
-
-const AUTOSAVE_KEY = 'nanonodebanana_autosave'
+import { NODE_PATHS, STORAGE_KEYS } from '../lib/constants'
 
 interface WorkflowCanvasProps {
   onCanvasReady?: (canvas: LGraphCanvas) => void
@@ -219,7 +218,7 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
         graph: serialiseGraph(graph),
         savedAt: new Date().toISOString(),
       }
-      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data))
+      localStorage.setItem(STORAGE_KEYS.AUTOSAVE, JSON.stringify(data))
     }
 
     initGraph()
@@ -304,7 +303,7 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
     const y = (event.clientY - rect.top - canvas.ds.offset[1]) / canvas.ds.scale
 
     const LiteGraph = liteGraphRef.current
-    const node = LiteGraph.createNode('input/image')
+    const node = LiteGraph.createNode(NODE_PATHS.IMAGE_SOURCE)
 
     if (node) {
       node.pos = [x, y]

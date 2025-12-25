@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useImageHistory } from '../hooks/useImageHistory'
 import type { HistoryImage } from '../context/ImageHistoryContext'
+import { NODE_PATHS, DRAG_DATA_TYPES } from '../lib/constants'
 
 const VISIBLE_COUNT = 5 // Number of images to show in collapsed fan view
 
@@ -28,9 +29,9 @@ export function ImageHistory({ onImageDragStart }: ImageHistoryProps) {
   // Handle drag start for image
   const handleDragStart = useCallback(
     (e: React.DragEvent, image: HistoryImage) => {
-      e.dataTransfer.setData('node-type', 'input/image')
-      e.dataTransfer.setData('image-url', image.imageUrl)
-      e.dataTransfer.setData('image-history-id', image.id)
+      e.dataTransfer.setData(DRAG_DATA_TYPES.NODE_TYPE, NODE_PATHS.IMAGE_SOURCE)
+      e.dataTransfer.setData(DRAG_DATA_TYPES.IMAGE_URL, image.imageUrl)
+      e.dataTransfer.setData(DRAG_DATA_TYPES.IMAGE_HISTORY_ID, image.id)
       e.dataTransfer.effectAllowed = 'copy'
       onImageDragStart?.(image)
     },

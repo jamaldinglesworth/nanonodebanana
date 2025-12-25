@@ -217,12 +217,9 @@ describe('graph-executor', () => {
 
   describe('cancel', () => {
     it('should stop execution when cancelled', async () => {
-      let executionCount = 0
-
       const slowNode = createMockNode(1, {
         outputs: [{ name: 'out', type: 'string' }],
         onExecute: vi.fn().mockImplementation(async () => {
-          executionCount++
           await new Promise(resolve => setTimeout(resolve, 100))
           return { out: 'done' }
         }),
@@ -230,10 +227,7 @@ describe('graph-executor', () => {
 
       const dependentNode = createMockNode(2, {
         inputs: [{ name: 'in', type: 'string', link: 1 }],
-        onExecute: vi.fn().mockImplementation(async () => {
-          executionCount++
-          return {}
-        }),
+        onExecute: vi.fn().mockResolvedValue({}),
       })
 
       const graph = createMockGraph([slowNode, dependentNode], {
@@ -271,9 +265,10 @@ describe('graph-executor', () => {
       const graph = createMockGraph([node], {})
       const engine = createExecutionEngine()
 
-      // Execute
-      for await (const _ of engine.execute(graph as never)) {
-        // consume
+      // Execute - consume all execution contexts
+      const contexts = []
+      for await (const ctx of engine.execute(graph as never)) {
+        contexts.push(ctx)
       }
 
       const results = engine.getResults()
@@ -318,11 +313,13 @@ describe('graph-executor', () => {
       const engine = createExecutionEngine()
 
       // First execute full graph to cache results
-      for await (const _ of engine.execute(graph as never)) {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _ctx of engine.execute(graph as never)) { /* consume */ }
       executionOrder.length = 0 // Reset
 
       // Now execute from node B
-      for await (const _ of engine.executeFromNode(graph as never, 2)) {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _ctx of engine.executeFromNode(graph as never, 2)) { /* consume */ }
 
       // Only B and C should execute (A is upstream and cached)
       expect(executionOrder).toEqual([2, 3])
@@ -362,7 +359,8 @@ describe('graph-executor', () => {
       const engine = createExecutionEngine()
 
       // Execute only node B
-      for await (const _ of engine.executeNodeOnly(graph as never, 2)) {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _ctx of engine.executeNodeOnly(graph as never, 2)) { /* consume */ }
 
       // Only node B should have executed
       expect(nodeA.onExecute).not.toHaveBeenCalled()
@@ -404,10 +402,12 @@ describe('graph-executor', () => {
       const gen2 = engine.execute(graph as never)
 
       // Consume first generator - should stop early
-      for await (const _ of gen1) {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _ctx of gen1) { /* consume */ }
 
       // Consume second generator
-      for await (const _ of gen2) {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _ctx of gen2) { /* consume */ }
 
       // Only the second execution should have fully completed the node
       // (first was cancelled when second started)

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { STORAGE_KEYS } from './constants'
 
 // Test the helper functions by importing the module
 // Note: We test the exported functions and mock dependencies
@@ -41,7 +42,7 @@ describe('workflow-storage', () => {
 
     it('should handle invalid JSON gracefully', async () => {
       const { loadFromLocalStorage } = await import('./workflow-storage')
-      localStorage.setItem('nanonodebanana_current_workflow', 'invalid json{')
+      localStorage.setItem(STORAGE_KEYS.CURRENT_WORKFLOW, 'invalid json{')
       const loaded = loadFromLocalStorage()
       expect(loaded).toBeNull()
     })
@@ -76,7 +77,7 @@ describe('workflow-storage', () => {
         savedAt: new Date().toISOString(),
         stripped: true,
       }
-      localStorage.setItem('nanonodebanana_autosave', JSON.stringify(autosaveData))
+      localStorage.setItem(STORAGE_KEYS.AUTOSAVE, JSON.stringify(autosaveData))
 
       const loaded = loadAutosave()
       expect(loaded?.name).toBe('Autosave Test')
