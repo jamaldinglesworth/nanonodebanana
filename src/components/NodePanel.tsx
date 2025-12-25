@@ -11,6 +11,10 @@ import {
   StylePresetNode,
   NegativePromptNode,
   ImageResizeNode,
+  ImageCropNode,
+  ImageBlendNode,
+  ImageAdjustNode,
+  ImageFilterNode,
   GeminiGeneratorNode,
   FalFluxNode,
   FalVideoNode,
@@ -38,6 +42,10 @@ const NODE_PATHS: Record<string, unknown> = {
   'processing/style': StylePresetNode,
   'processing/negative': NegativePromptNode,
   'processing/resize': ImageResizeNode,
+  'processing/crop': ImageCropNode,
+  'processing/blend': ImageBlendNode,
+  'processing/adjust': ImageAdjustNode,
+  'processing/filter': ImageFilterNode,
 
   // Generation nodes
   'generation/gemini': GeminiGeneratorNode,
