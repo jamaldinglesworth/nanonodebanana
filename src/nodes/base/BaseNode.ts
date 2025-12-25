@@ -420,6 +420,9 @@ export function createNodeClass(
       // Add resize handler with constraint enforcement (unless overridden by image preview)
       if (!config.showImagePreview) {
         this.onResize = function (size: [number, number]) {
+          // Don't enforce constraints when node is collapsed - let LiteGraph handle collapse sizing
+          if (this.flags?.collapsed) return
+
           // Prevent circular updates
           if (this._isResizing) return
           this._isResizing = true
@@ -694,6 +697,9 @@ export function createNodeClass(
 
       // Add onResize handler to sync widgets when manual resizing happens
       this.onResize = function (size: [number, number]) {
+        // Don't enforce constraints when node is collapsed - let LiteGraph handle collapse sizing
+        if (this.flags?.collapsed) return
+
         // Prevent circular updates
         if (this._isResizing) return
         this._isResizing = true

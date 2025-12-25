@@ -4,6 +4,7 @@ import { NODE_TYPE_COLOURS } from '../../types/nodes'
 // Extend LGraphNode type for our custom properties
 interface SeedNodeType extends LGraphNode {
   resizable?: boolean
+  onResize?: (size: [number, number]) => void
   _randomizeRect?: { x: number; y: number; width: number; height: number }
 }
 
@@ -33,6 +34,18 @@ export function SeedNode(this: SeedNodeType) {
   this.color = NODE_TYPE_COLOURS.seed
   this.bgcolor = adjustBrightness(NODE_TYPE_COLOURS.seed, -40)
 
+  // Handle resize - skip constraints when collapsed to allow LiteGraph collapse
+  this.onResize = function (size: [number, number]) {
+    // Don't enforce constraints when node is collapsed
+    if (this.flags?.collapsed) return
+
+    // Enforce minimum size for usability
+    const minWidth = 150
+    const minHeight = 100
+    if (size[0] < minWidth) size[0] = minWidth
+    if (size[1] < minHeight) size[1] = minHeight
+  }
+
   // Store reference for callbacks
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const nodeRef = this
@@ -50,6 +63,9 @@ export function SeedNode(this: SeedNodeType) {
 
   // Custom foreground drawing - draws Randomize button
   this.onDrawForeground = function (ctx: CanvasRenderingContext2D) {
+    // Don't draw content when node is collapsed
+    if (this.flags?.collapsed) return
+
     // Calculate button position (below widgets)
     const titleHeight = 26
     const widgetHeight = 30

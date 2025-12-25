@@ -16,6 +16,7 @@ const COMMON_NEGATIVES: Record<string, string> = {
 // Extend LGraphNode type for our custom properties
 interface NegativePromptNodeType extends LGraphNode {
   resizable?: boolean
+  onResize?: (size: [number, number]) => void
   _buttonRects: Array<{ x: number; y: number; width: number; height: number; label: string }>
 }
 
@@ -42,6 +43,18 @@ export function NegativePromptNode(this: NegativePromptNodeType) {
   this.color = NODE_TYPE_COLOURS.negativePrompt
   this.bgcolor = adjustBrightness(NODE_TYPE_COLOURS.negativePrompt, -40)
 
+  // Handle resize - skip constraints when collapsed to allow LiteGraph collapse
+  this.onResize = function (size: [number, number]) {
+    // Don't enforce constraints when node is collapsed
+    if (this.flags?.collapsed) return
+
+    // Enforce minimum size for usability
+    const minWidth = 180
+    const minHeight = 150
+    if (size[0] < minWidth) size[0] = minWidth
+    if (size[1] < minHeight) size[1] = minHeight
+  }
+
   // Store button rectangles for click detection
   this._buttonRects = []
 
@@ -51,6 +64,9 @@ export function NegativePromptNode(this: NegativePromptNodeType) {
 
   // Custom foreground drawing - draws quick-add buttons
   this.onDrawForeground = function (ctx: CanvasRenderingContext2D) {
+    // Don't draw content when node is collapsed
+    if (this.flags?.collapsed) return
+
     // Calculate button area (below the widget)
     const widgetHeight = 60 // Approximate height of textarea widget
     const titleHeight = 26
