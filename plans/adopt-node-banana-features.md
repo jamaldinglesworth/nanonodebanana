@@ -48,6 +48,7 @@ Analysis of [shrimbly/node-banana](https://github.com/shrimbly/node-banana) repo
 ### 1. Image Annotation System (High Priority)
 
 **What node-banana has:**
+
 - AnnotationNode that opens a full-screen modal
 - Drawing tools: Rectangle, Circle, Arrow, Freehand, Text
 - Konva.js-based canvas with zoom (0.1x-5x)
@@ -55,17 +56,20 @@ Analysis of [shrimbly/node-banana](https://github.com/shrimbly/node-banana) repo
 - Select/transform existing annotations
 
 **Why adopt:**
+
 - Essential for image editing workflows (inpainting masks, guidance)
 - Common in AI image tools (ComfyUI has similar)
 - Differentiates from basic prompt-to-image pipelines
 
 **Implementation approach:**
+
 ```
 src/components/AnnotationModal.tsx     (new - Konva canvas modal)
 src/nodes/processing/AnnotationNode.ts (new - node definition)
 ```
 
 **Dependencies to add:**
+
 ```bash
 bun add konva react-konva
 ```
@@ -77,6 +81,7 @@ bun add konva react-konva
 ### 2. Global Image History Panel (High Priority)
 
 **What node-banana has:**
+
 - Fan-layout UI showing recent 10 images
 - Expandable sidebar for full history
 - Drag images to canvas to create nodes
@@ -84,11 +89,13 @@ bun add konva react-konva
 - Clear all functionality
 
 **Why adopt:**
+
 - Users often want to reuse previous generations
 - Improves workflow iteration speed
 - Common expectation in AI image tools
 
 **Implementation approach:**
+
 ```
 src/components/ImageHistory.tsx        (new - history panel)
 src/context/ImageHistoryContext.tsx    (new - or add to existing context)
@@ -101,16 +108,19 @@ src/context/ImageHistoryContext.tsx    (new - or add to existing context)
 ### 3. Multi-Select Toolbar (Medium Priority)
 
 **What node-banana has:**
+
 - Floating toolbar when 2+ nodes selected
 - Layout actions: Stack horizontally, Stack vertically, Arrange as grid
 - Group/Ungroup operations
 
 **Why adopt:**
+
 - Improves workflow organization
 - Common UX pattern in node editors
 - LiteGraph supports groups natively
 
 **Implementation approach:**
+
 ```
 src/components/MultiSelectToolbar.tsx  (new)
 ```
@@ -124,21 +134,25 @@ src/components/MultiSelectToolbar.tsx  (new)
 ### 4. Floating Action Bar (Medium Priority)
 
 **What node-banana has:**
+
 - Bottom-center floating toolbar
 - Quick node creation buttons
 - Run workflow options (full, from selected, selected only)
 - Edge style toggle (angular/curved)
 
 **Why adopt:**
+
 - More discoverable than right-click menus
 - Faster workflow building
 - Run options are powerful for debugging
 
 **What we already have:**
+
 - Toolbar.tsx exists but is simpler
 - Side panel for node creation
 
 **Implementation approach:**
+
 - Enhance existing `Toolbar.tsx` with:
   - "Run from selected node" option
   - "Run selected node only" option
@@ -151,15 +165,18 @@ src/components/MultiSelectToolbar.tsx  (new)
 ### 5. Split Grid Node (Low Priority)
 
 **What node-banana has:**
+
 - Divides input image into grid cells
 - Configurable rows × columns
 - Creates multiple output handles for each cell
 
 **Why adopt:**
+
 - Useful for batch processing sections of image
 - Enables parallel processing of image regions
 
 **Implementation approach:**
+
 ```
 src/nodes/processing/SplitGridNode.ts  (new)
 ```
@@ -171,23 +188,28 @@ src/nodes/processing/SplitGridNode.ts  (new)
 ### 6. State Management Upgrade to Zustand (Optional)
 
 **What node-banana has:**
+
 - Clean Zustand store with actions
 - Selective subscriptions prevent unnecessary re-renders
 - Copy/paste with internal edge preservation
 
 **Why consider:**
+
 - 40-70% fewer re-renders vs Context API (per research)
 - Cleaner action organization
 - Better for larger applications
 
 **Current state:**
+
 - We use React Context (`GraphContext`, `ExecutionContext`)
 - Works but may have performance issues at scale
 
 **Implementation approach:**
+
 ```bash
 bun add zustand
 ```
+
 ```
 src/store/workflowStore.ts  (new - migrate from contexts)
 ```
@@ -212,22 +234,26 @@ src/store/workflowStore.ts  (new - migrate from contexts)
 ## Recommended Implementation Order
 
 ### Phase 1: Quick Wins (1-2 days)
+
 1. **Multi-Select Toolbar** - Expose LiteGraph's existing group functionality
 2. **Enhanced Toolbar** - Add run options and edge style toggle
 
 ### Phase 2: Core Features (3-5 days)
+
 3. **Global Image History** - Track and reuse generated images
-4. **Annotation System** - Add Konva-based image annotation
+2. **Annotation System** - Add Konva-based image annotation
 
 ### Phase 3: Nice to Have (2-3 days)
+
 5. **Split Grid Node** - Image segmentation for batch processing
-6. **Zustand Migration** - Performance optimization (optional)
+2. **Zustand Migration** - Performance optimization (optional)
 
 ---
 
 ## Acceptance Criteria
 
 ### Multi-Select Toolbar
+
 - [ ] Toolbar appears when 2+ nodes selected
 - [ ] Stack horizontally arranges nodes in a row
 - [ ] Stack vertically arranges nodes in a column
@@ -236,11 +262,13 @@ src/store/workflowStore.ts  (new - migrate from contexts)
 - [ ] Ungroup removes nodes from group
 
 ### Enhanced Toolbar
+
 - [ ] "Run from selected" executes graph starting at selected node
 - [ ] "Run selected only" executes just the selected node
 - [ ] Edge style toggle switches between curved and angular connections
 
 ### Image History
+
 - [ ] Generated images automatically added to history
 - [ ] History panel shows recent 10 images with expand option
 - [ ] Drag image from history creates ImageSourceNode on canvas
@@ -248,6 +276,7 @@ src/store/workflowStore.ts  (new - migrate from contexts)
 - [ ] Clear all removes history
 
 ### Annotation System
+
 - [ ] AnnotationNode accepts image input
 - [ ] Click image opens full-screen modal
 - [ ] Drawing tools: Select, Rectangle, Circle, Arrow, Freehand, Text
@@ -261,7 +290,9 @@ src/store/workflowStore.ts  (new - migrate from contexts)
 ## Technical Notes
 
 ### LiteGraph Group Support
+
 LiteGraph already supports groups natively:
+
 ```javascript
 const group = new LiteGraph.LGraphGroup("My Group")
 group.pos = [100, 100]
@@ -273,13 +304,16 @@ graph.add(group)
 We just need UI to expose this functionality.
 
 ### Konva.js Integration
+
 For annotation, we'll use Konva.js (same as node-banana):
+
 - Renders to HTML5 Canvas
 - Shape primitives (Rect, Circle, Arrow, Line, Text)
 - Transformer for resize/rotate
 - Stage → Layer → Shapes hierarchy
 
 ### PNG Metadata (Future Enhancement)
+
 Research shows ComfyUI embeds workflow in PNG metadata - consider adding this for workflow sharing.
 
 ---
@@ -287,6 +321,7 @@ Research shows ComfyUI embeds workflow in PNG metadata - consider adding this fo
 ## References
 
 ### Research Sources
+
 - [node-banana GitHub](https://github.com/shrimbly/node-banana)
 - [LiteGraph.js Groups Documentation](https://github.com/jagenjo/litegraph.js/blob/master/guides/README.md)
 - [Konva.js Documentation](https://konvajs.org/docs/)
@@ -294,6 +329,7 @@ Research shows ComfyUI embeds workflow in PNG metadata - consider adding this fo
 - [Zustand Documentation](https://zustand-demo.pmnd.rs/)
 
 ### Internal References
+
 - `src/components/Toolbar.tsx` - Current toolbar implementation
 - `src/context/GraphContext.tsx` - Current state management
 - `src/nodes/index.ts` - Node registration
@@ -333,11 +369,13 @@ Original estimate: 8-12 days
 ## Summary
 
 **High-value adoptions:**
+
 1. Image History Panel - Improves iteration workflow (start here - lowest risk)
 2. Annotation System - Enables image editing capabilities (highest value, highest risk)
 3. Multi-Select Toolbar - Better organization UX (quick win)
 
 **Our advantages to keep:**
+
 - Fal.ai FLUX model integration
 - Comprehensive image processing nodes
 - SQLite-backed persistence

@@ -6,6 +6,7 @@ interface ToolbarProps {
   onLoad: () => void
   onSettings: () => void
   onTemplates: () => void
+  onWorkflowTemplates: () => void
   onRun: () => void
   onRunFromSelected?: () => void
   onRunSelectedOnly?: () => void
@@ -30,6 +31,7 @@ export function Toolbar({
   onLoad,
   onSettings,
   onTemplates,
+  onWorkflowTemplates,
   onRun,
   onRunFromSelected,
   onRunSelectedOnly,
@@ -97,7 +99,15 @@ export function Toolbar({
           title="Prompt Templates (T)"
         >
           <span>📝</span>
-          Templates
+          Prompts
+        </button>
+        <button
+          onClick={onWorkflowTemplates}
+          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-700 hover:text-zinc-50"
+          title="Workflow Templates (W)"
+        >
+          <span>🔧</span>
+          Workflows
         </button>
 
         <div className="mx-2 h-6 w-px bg-zinc-600" />
