@@ -4,12 +4,78 @@ import { workflowApi } from './api-client'
 
 const LOCAL_STORAGE_KEY = 'nanonodebanana_current_workflow'
 const AUTOSAVE_KEY = 'nanonodebanana_autosave'
+const MAX_AUTOSAVE_SIZE = 2 * 1024 * 1024 // 2MB limit for autosave
 
 /**
  * Serialises a Litegraph graph to a JSON-compatible object.
  */
 export function serialiseGraph(graph: LGraph): object {
   return graph.serialize()
+}
+
+/**
+ * Strips large base64 image data from serialised graph to reduce storage size.
+ * This is used for autosave to prevent localStorage quota errors.
+ */
+function stripLargeDataFromGraph(graphData: object): object {
+  const stripped = JSON.parse(JSON.stringify(graphData))
+
+  if (stripped.nodes && Array.isArray(stripped.nodes)) {
+    for (const node of stripped.nodes) {
+      // Strip base64 images from widget values and properties
+      if (node.widgets_values && Array.isArray(node.widgets_values)) {
+        node.widgets_values = node.widgets_values.map((value: unknown) => {
+          if (typeof value === 'string' && isLargeBase64(value)) {
+            return '[IMAGE_DATA_STRIPPED_FOR_AUTOSAVE]'
+          }
+          return value
+        })
+      }
+
+      // Strip from properties
+      if (node.properties) {
+        for (const key of Object.keys(node.properties)) {
+          const value = node.properties[key]
+          if (typeof value === 'string' && isLargeBase64(value)) {
+            node.properties[key] = '[IMAGE_DATA_STRIPPED_FOR_AUTOSAVE]'
+          }
+        }
+      }
+    }
+  }
+
+  return stripped
+}
+
+/**
+ * Checks if a string is a large base64-encoded data string.
+ */
+function isLargeBase64(value: string): boolean {
+  // Check for data URI pattern or raw base64 that's larger than 10KB
+  const isDataUri = value.startsWith('data:')
+  const isLongString = value.length > 10000
+  return isDataUri && isLongString
+}
+
+/**
+ * Safely sets an item in localStorage with quota error handling.
+ * Returns true if successful, false if quota exceeded.
+ */
+function safeSetLocalStorage(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value)
+    return true
+  } catch (error) {
+    if (
+      error instanceof DOMException &&
+      (error.name === 'QuotaExceededError' ||
+        error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+    ) {
+      console.warn(`localStorage quota exceeded for key: ${key}`)
+      return false
+    }
+    throw error
+  }
 }
 
 /**
@@ -21,14 +87,30 @@ export function deserialiseGraph(graph: LGraph, data: object): void {
 
 /**
  * Saves the current workflow to local storage for recovery.
+ * Returns true if successful, false if quota exceeded.
  */
-export function saveToLocalStorage(graph: LGraph, name: string): void {
+export function saveToLocalStorage(graph: LGraph, name: string): boolean {
+  const graphData = serialiseGraph(graph)
   const data = {
     name,
-    graph: serialiseGraph(graph),
+    graph: graphData,
     savedAt: new Date().toISOString(),
   }
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data))
+
+  const jsonData = JSON.stringify(data)
+
+  // If data is too large, try stripping image data first
+  if (jsonData.length > MAX_AUTOSAVE_SIZE) {
+    const strippedData = {
+      name,
+      graph: stripLargeDataFromGraph(graphData),
+      savedAt: new Date().toISOString(),
+      stripped: true,
+    }
+    return safeSetLocalStorage(LOCAL_STORAGE_KEY, JSON.stringify(strippedData))
+  }
+
+  return safeSetLocalStorage(LOCAL_STORAGE_KEY, jsonData)
 }
 
 /**
@@ -58,16 +140,34 @@ export function clearLocalStorage(): void {
 
 /**
  * Enables autosave for the graph.
- * Saves to local storage on every change.
+ * Saves to local storage on every change, stripping large image data to prevent quota errors.
  */
 export function enableAutosave(graph: LGraph, name: string): () => void {
   const intervalId = setInterval(() => {
+    const graphData = serialiseGraph(graph)
+
+    // Always strip large data for autosave to prevent quota issues
+    const strippedGraph = stripLargeDataFromGraph(graphData)
     const data = {
       name,
-      graph: serialiseGraph(graph),
+      graph: strippedGraph,
       savedAt: new Date().toISOString(),
+      stripped: true,
     }
-    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data))
+
+    const jsonData = JSON.stringify(data)
+
+    // Skip autosave silently if data is too large
+    if (jsonData.length > MAX_AUTOSAVE_SIZE) {
+      return
+    }
+
+    const success = safeSetLocalStorage(AUTOSAVE_KEY, jsonData)
+    if (!success) {
+      // Try to clear old autosave and retry
+      localStorage.removeItem(AUTOSAVE_KEY)
+      safeSetLocalStorage(AUTOSAVE_KEY, jsonData)
+    }
   }, 30000) // Autosave every 30 seconds
 
   return () => clearInterval(intervalId)

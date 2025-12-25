@@ -1,8 +1,11 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import type { LGraph, LGraphCanvas, LiteGraph as LiteGraphType } from 'litegraph.js'
 import { useGraph } from '../hooks/useGraph'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
+import { useClipboard } from '../hooks/useClipboard'
 import { registerAllNodes } from '../nodes'
 import { loadAutosave, enableAutosave, serialiseGraph } from '../lib/workflow-storage'
+import { Minimap } from './Minimap'
 
 const AUTOSAVE_KEY = 'nanonodebanana_autosave'
 
@@ -23,6 +26,19 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
   const [isInitialized, setIsInitialized] = useState(false)
 
   const { setGraph, setSelectedNode } = useGraph()
+
+  // Enable keyboard shortcuts for the canvas
+  useKeyboardShortcuts({
+    graph: graphRef.current,
+    canvas: canvasInstanceRef.current,
+  })
+
+  // Enable clipboard operations (copy/paste nodes and images)
+  useClipboard({
+    graph: graphRef.current,
+    canvas: canvasInstanceRef.current,
+    liteGraph: liteGraphRef.current,
+  })
 
   // Initialise Litegraph when component mounts
   useEffect(() => {
@@ -107,7 +123,6 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
       // Try to load autosaved workflow
       const autosaved = loadAutosave()
       if (autosaved && autosaved.graph) {
-        console.log('Restoring autosaved workflow from:', autosaved.savedAt)
         try {
           newGraph.configure(autosaved.graph as Parameters<typeof newGraph.configure>[0])
         } catch (err) {
@@ -163,7 +178,6 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
 
       // Enable autosave (saves every 30 seconds)
       const stopAutosave = enableAutosave(newGraph, 'Current Workflow')
-      console.log('Autosave enabled')
 
       // Also save on every graph change (immediate save)
       const originalOnChange = newGraph.onNodeAdded
@@ -218,13 +232,14 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
     }
   }, [setGraph, setSelectedNode, onCanvasReady])
 
-  // Handle node drop from the node panel
+  // Handle node drop from the node panel or image history
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault()
 
     const nodeType = event.dataTransfer.getData('node-type')
+    const imageUrl = event.dataTransfer.getData('image-url')
+
     if (!nodeType || !graphRef.current || !canvasInstanceRef.current || !liteGraphRef.current) {
-      console.warn('Cannot create node: missing dependencies', { nodeType, graph: !!graphRef.current, canvas: !!canvasInstanceRef.current, liteGraph: !!liteGraphRef.current })
       return
     }
 
@@ -244,13 +259,21 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
     if (node) {
       node.pos = [x, y]
       graphRef.current.add(node)
+
+      // If dropped from image history, set the image data directly
+      if (imageUrl && node.properties) {
+        node.properties.imageData = imageUrl
+        // Trigger the node to process the new image
+        if (typeof node.onPropertyChanged === 'function') {
+          node.onPropertyChanged('imageData', imageUrl, '')
+        }
+      }
+
       canvas.setDirty(true, true)
 
       // Select the newly created node
       canvas.selectNode(node)
       setSelectedNode(node)
-    } else {
-      console.warn(`Failed to create node of type: ${nodeType}`)
     }
   }, [setSelectedNode])
 
@@ -340,11 +363,14 @@ export function WorkflowCanvas({ onCanvasReady }: WorkflowCanvasProps) {
         </div>
       )}
 
-      {/* Minimap placeholder */}
-      <div className="absolute bottom-4 left-4 h-32 w-48 rounded-lg border border-zinc-700 bg-zinc-800/80 opacity-50 hover:opacity-100 transition-opacity">
-        <div className="flex h-full items-center justify-center text-xs text-zinc-500">
-          Minimap (coming soon)
-        </div>
+      {/* Minimap */}
+      <div className="absolute bottom-4 left-4 rounded-lg border border-zinc-700 bg-zinc-800/80 opacity-60 hover:opacity-100 transition-opacity overflow-hidden">
+        <Minimap
+          graph={graphRef.current}
+          canvas={canvasInstanceRef.current}
+          width={192}
+          height={128}
+        />
       </div>
 
       {/* Zoom controls */}

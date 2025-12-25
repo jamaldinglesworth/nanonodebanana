@@ -1,5 +1,6 @@
-import Database from 'better-sqlite3'
+import { Database } from 'bun:sqlite'
 import { join } from 'path'
+import { mkdirSync, existsSync } from 'fs'
 import {
   CREATE_WORKFLOWS_TABLE,
   CREATE_WORKFLOWS_NAME_INDEX,
@@ -12,27 +13,38 @@ import {
 /**
  * Database file path.
  */
-const DB_PATH = process.env.DATABASE_URL ?? join(process.cwd(), 'data', 'workflows.db')
+const DB_DIR = process.env.DATABASE_DIR ?? join(process.cwd(), 'data')
+const DB_PATH = process.env.DATABASE_URL ?? join(DB_DIR, 'workflows.db')
 
 /**
  * Database client singleton.
  */
-let database: Database.Database | null = null
+let database: Database | null = null
+
+/**
+ * Runs a SQL statement that doesn't return results.
+ * Using run() method to execute DDL statements.
+ */
+function runSQL(db: Database, sql: string): void {
+  db.run(sql)
+}
 
 /**
  * Gets or creates the database connection.
  */
-function getDatabase(): Database.Database {
+function getDatabase(): Database {
   if (!database) {
+    // Ensure the data directory exists
+    if (!existsSync(DB_DIR)) {
+      mkdirSync(DB_DIR, { recursive: true })
+    }
+
     database = new Database(DB_PATH)
 
-    // Enable WAL mode for better performance
-    database.pragma('journal_mode = WAL')
-
-    // Create tables and indices using better-sqlite3's exec method (not child_process)
-    database.exec(CREATE_WORKFLOWS_TABLE)
-    database.exec(CREATE_WORKFLOWS_NAME_INDEX)
-    database.exec(CREATE_WORKFLOWS_UPDATED_INDEX)
+    // Create tables and indices using bun:sqlite's run method
+    runSQL(database, CREATE_WORKFLOWS_TABLE)
+    runSQL(database, CREATE_WORKFLOWS_NAME_INDEX)
+    runSQL(database, CREATE_WORKFLOWS_UPDATED_INDEX)
   }
 
   return database

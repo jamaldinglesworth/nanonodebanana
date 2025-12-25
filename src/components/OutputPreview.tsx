@@ -64,7 +64,7 @@ export function OutputPreview() {
             />
           </div>
           <p className="mt-1 text-center text-xs text-zinc-500">
-            Generating... {progress}%
+            Generating... {Math.round(progress)}%
           </p>
         </div>
       )}

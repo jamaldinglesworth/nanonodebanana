@@ -1,5 +1,6 @@
 import type { LGraphNode, IWidget } from 'litegraph.js'
 import { NODE_TYPE_COLOURS } from '../../types/nodes'
+import { extractWorkflowFromPngFile, type WorkflowMetadata } from '../../lib/png-metadata'
 
 // Extend LGraphNode type for our custom properties
 interface ImageSourceNodeType extends LGraphNode {
@@ -76,10 +77,18 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
   }
 
   // Process dropped or pasted file
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       console.warn('Not an image file:', file.type)
       return
+    }
+
+    // Check for workflow metadata in PNG files
+    if (file.type === 'image/png') {
+      const metadata = await extractWorkflowFromPngFile(file)
+      if (metadata) {
+        handleWorkflowMetadata(metadata, file.name)
+      }
     }
 
     const reader = new FileReader()
@@ -105,6 +114,19 @@ export function ImageSourceNode(this: ImageSourceNodeType) {
       }
     }
     reader.readAsDataURL(file)
+  }
+
+  // Handle detected workflow metadata
+  const handleWorkflowMetadata = (metadata: WorkflowMetadata, fileName: string) => {
+    // Dispatch custom event for App to handle
+    const event = new CustomEvent('workflow-detected', {
+      detail: {
+        metadata,
+        fileName,
+        graph: nodeRef.graph,
+      },
+    })
+    window.dispatchEvent(event)
   }
 
   // Custom foreground drawing - draws image preview and drop zone

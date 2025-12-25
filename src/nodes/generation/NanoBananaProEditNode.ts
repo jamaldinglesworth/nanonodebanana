@@ -3,6 +3,11 @@ import { NODE_TYPE_COLOURS } from '../../types/nodes'
 import { generateApi } from '../../lib/api-client'
 
 /**
+ * Maximum number of image inputs supported.
+ */
+const MAX_IMAGE_INPUTS = 14
+
+/**
  * Aspect ratio presets for Nano Banana Pro Edit.
  * Includes 'auto' which preserves the input image's aspect ratio.
  */
@@ -31,9 +36,22 @@ const RESOLUTIONS = ['1K', '2K', '4K'] as const
 const OUTPUT_FORMATS = ['png', 'jpeg', 'webp'] as const
 
 /**
+ * Generate image input definitions for 1 to MAX_IMAGE_INPUTS.
+ */
+function generateImageInputs() {
+  const inputs: Array<{ name: string; type: 'image' }> = []
+  for (let i = 1; i <= MAX_IMAGE_INPUTS; i++) {
+    inputs.push({ name: `image_${i}`, type: 'image' })
+  }
+  return inputs
+}
+
+/**
  * NanoBananaProEditNode - Nano Banana Pro image editing node.
  * Edits images using Fal.ai's Nano Banana Pro Edit model with enhanced
  * resolution control, web search integration, and better realism/typography.
+ *
+ * Supports up to 14 input images for multi-image editing workflows.
  *
  * Combines capabilities of:
  * - NanoBananaEditNode (takes input images for editing)
@@ -44,9 +62,9 @@ export const NanoBananaProEditNode = createNodeClass(
     title: 'Nano Banana Pro Edit',
     category: 'generation',
     colour: NODE_TYPE_COLOURS.nanoBananaProEdit,
-    description: 'Pro image editing with resolution control & web search',
+    description: 'Pro image editing with up to 14 inputs, resolution control & web search',
     inputs: [
-      { name: 'image', type: 'image' },
+      ...generateImageInputs(),
       { name: 'prompt', type: 'string' },
     ],
     outputs: [
@@ -111,7 +129,15 @@ export const NanoBananaProEditNode = createNodeClass(
     showProgressIndicator: true,
   },
   async (node: ExecutableNode) => {
-    const image = getInputValue<string>(node, 'image')
+    // Collect all connected images (image_1 through image_14)
+    const imageUrls: string[] = []
+    for (let i = 1; i <= MAX_IMAGE_INPUTS; i++) {
+      const img = getInputValue<string>(node, `image_${i}`)
+      if (img) {
+        imageUrls.push(img)
+      }
+    }
+
     const prompt = getInputValue<string>(node, 'prompt')
 
     const resolution = getWidgetValue<string>(node, 'resolution') ?? '1K'
@@ -121,8 +147,8 @@ export const NanoBananaProEditNode = createNodeClass(
     const enableWebSearch = getWidgetValue<boolean>(node, 'enable_web_search') ?? false
     const limitGenerations = getWidgetValue<boolean>(node, 'limit_generations') ?? false
 
-    if (!image) {
-      throw new Error('Input image is required')
+    if (imageUrls.length === 0) {
+      throw new Error('At least one input image is required')
     }
 
     if (!prompt) {
@@ -131,10 +157,10 @@ export const NanoBananaProEditNode = createNodeClass(
 
     const numImages = parseInt(numImagesStr, 10)
 
-    // Call API
+    // Call API with all collected images
     const response = await generateApi.nanoBananaProEdit({
       prompt,
-      imageUrl: image,
+      imageUrls,
       numImages,
       resolution: resolution as '1K' | '2K' | '4K',
       aspectRatio: aspectRatio as 'auto' | '21:9' | '16:9' | '3:2' | '4:3' | '5:4' | '1:1' | '4:5' | '3:4' | '2:3' | '9:16',

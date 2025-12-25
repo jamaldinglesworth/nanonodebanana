@@ -12,6 +12,10 @@ import { CombinePromptsNode } from './processing/CombinePromptsNode'
 import { StylePresetNode } from './processing/StylePresetNode'
 import { NegativePromptNode } from './processing/NegativePromptNode'
 import { ImageResizeNode } from './processing/ImageResizeNode'
+import { ImageCropNode } from './processing/ImageCropNode'
+import { ImageBlendNode } from './processing/ImageBlendNode'
+import { ImageAdjustNode } from './processing/ImageAdjustNode'
+import { ImageFilterNode } from './processing/ImageFilterNode'
 import { GeminiGeneratorNode } from './generation/GeminiGeneratorNode'
 import { FalFluxNode } from './generation/FalFluxNode'
 import { FalVideoNode } from './generation/FalVideoNode'
@@ -38,6 +42,10 @@ const NODE_PATHS = {
   'processing/style': StylePresetNode,
   'processing/negative': NegativePromptNode,
   'processing/resize': ImageResizeNode,
+  'processing/crop': ImageCropNode,
+  'processing/blend': ImageBlendNode,
+  'processing/adjust': ImageAdjustNode,
+  'processing/filter': ImageFilterNode,
 
   // Generation nodes
   'generation/gemini': GeminiGeneratorNode,
@@ -65,8 +73,6 @@ export function registerAllNodes(): void {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       LiteGraph.registerNodeType(path, NodeClass as any)
     }
-
-    console.log(`Registered ${Object.keys(NODE_PATHS).length} custom nodes`)
   })
 }
 
@@ -94,6 +100,10 @@ export {
   StylePresetNode,
   NegativePromptNode,
   ImageResizeNode,
+  ImageCropNode,
+  ImageBlendNode,
+  ImageAdjustNode,
+  ImageFilterNode,
   GeminiGeneratorNode,
   FalFluxNode,
   FalVideoNode,

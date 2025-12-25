@@ -205,7 +205,7 @@ export interface NanoBananaProResponse {
 
 export interface NanoBananaProEditRequest {
   prompt: string
-  imageUrl: string
+  imageUrls: string[]
   numImages: number
   resolution: '1K' | '2K' | '4K'
   aspectRatio: 'auto' | '21:9' | '16:9' | '3:2' | '4:3' | '5:4' | '1:1' | '4:5' | '3:4' | '2:3' | '9:16'
@@ -247,6 +247,10 @@ export const NODE_TYPE_COLOURS = {
   stylePreset: '#333',
   negativePrompt: '#333',
   imageResize: '#333',
+  imageCrop: '#333',
+  imageBlend: '#333',
+  imageAdjust: '#333',
+  imageFilter: '#333',
 
   // Generation nodes - neutral gray
   gemini: '#333',

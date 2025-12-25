@@ -29,14 +29,12 @@ export function PropertiesPanel({ selectedNode }: PropertiesPanelProps) {
     }
 
     window.selectedNode = selectedNode
-    console.log('PropertiesPanel: Subscribing to node', selectedNode.id)
 
     // Store original handlers
     const originalOnPropertyChanged = selectedNode.onPropertyChanged
 
     // Override onPropertyChanged to trigger React update
     selectedNode.onPropertyChanged = function (name, value, prev_value) {
-      console.log(`PropertiesPanel: Property ${name} changed to ${value}`)
       if (originalOnPropertyChanged) {
         originalOnPropertyChanged.call(this, name, value, prev_value)
       }
@@ -50,7 +48,6 @@ export function PropertiesPanel({ selectedNode }: PropertiesPanelProps) {
     }, 200)
 
     return () => {
-      console.log('PropertiesPanel: Unsubscribing from node', selectedNode.id)
       selectedNode.onPropertyChanged = originalOnPropertyChanged
       clearInterval(interval)
     }

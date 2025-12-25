@@ -1,5 +1,6 @@
 import type { LGraph, LGraphNode } from 'litegraph.js'
 import type { ExecutionContext, ExecutionEngine } from '../types/nodes'
+import { NODE_MODE } from '../nodes/base/BaseNode'
 
 /**
  * Topologically sorts nodes in the graph for execution order.
@@ -113,7 +114,76 @@ export function createExecutionEngine(): ExecutionEngine {
 
       const node = sortedNodes[i]!
       const nodeId = String(node.id)
+      const nodeMode = (node as unknown as { mode?: number }).mode ?? NODE_MODE.NORMAL
 
+      // Handle muted nodes - skip execution, output null
+      if (nodeMode === NODE_MODE.MUTED) {
+        const nodeOutput: Record<string, unknown> = {}
+        // Set all outputs to null
+        if (node.outputs) {
+          for (const output of node.outputs) {
+            nodeOutput[output.name] = null
+          }
+        }
+        nodeResults.set(nodeId, nodeOutput)
+        results.set(nodeId, nodeOutput)
+
+        yield {
+          nodeId,
+          status: 'completed',
+          progress: ((i + 1) / sortedNodes.length) * 100,
+          result: nodeOutput,
+        }
+        continue
+      }
+
+      // Handle bypassed nodes - pass through first input to first output
+      if (nodeMode === NODE_MODE.BYPASSED) {
+        const inputs = getNodeInputs(node, graph, nodeResults)
+        const nodeOutput: Record<string, unknown> = {}
+
+        // Pass through: map inputs to outputs by matching types or position
+        if (node.inputs && node.outputs) {
+          for (let outIdx = 0; outIdx < node.outputs.length; outIdx++) {
+            const output = node.outputs[outIdx]
+            if (!output) continue
+
+            // Find matching input by type first, then by position
+            let matchedValue: unknown = undefined
+            for (let inIdx = 0; inIdx < node.inputs.length; inIdx++) {
+              const input = node.inputs[inIdx]
+              if (!input) continue
+
+              // Check if types match
+              if (input.type === output.type && inputs[input.name] !== undefined) {
+                matchedValue = inputs[input.name]
+                break
+              }
+            }
+            // Fallback to position-based matching
+            if (matchedValue === undefined && node.inputs[outIdx]) {
+              const inputName = node.inputs[outIdx]?.name
+              if (inputName) {
+                matchedValue = inputs[inputName]
+              }
+            }
+            nodeOutput[output.name] = matchedValue
+          }
+        }
+
+        nodeResults.set(nodeId, nodeOutput)
+        results.set(nodeId, nodeOutput)
+
+        yield {
+          nodeId,
+          status: 'completed',
+          progress: ((i + 1) / sortedNodes.length) * 100,
+          result: nodeOutput,
+        }
+        continue
+      }
+
+      // Normal execution
       // Emit running status
       yield {
         nodeId,

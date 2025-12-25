@@ -1,4 +1,4 @@
-import type { LGraphNode } from 'litegraph.js'
+import type { LGraphNode, LGraphCanvas } from 'litegraph.js'
 import type { NodeCategory, ExecutionStatus } from '../../types/nodes'
 
 /**
@@ -119,7 +119,22 @@ function loadImage(url: string): HTMLImageElement | null {
 }
 
 /**
+ * Node mode values (following LiteGraph/ComfyUI conventions).
+ * - NORMAL (0): Execute normally
+ * - MUTED (2): Skip execution, output null
+ * - BYPASSED (4): Skip execution, pass input through to output
+ */
+export const NODE_MODE = {
+  NORMAL: 0,
+  MUTED: 2,
+  BYPASSED: 4,
+} as const
+
+export type NodeMode = typeof NODE_MODE[keyof typeof NODE_MODE]
+
+/**
  * Extended node interface with execution capabilities.
+ * Note: mode property is inherited from LGraphNode (0 = normal, 2 = muted, 4 = bypassed)
  */
 export interface ExecutableNode extends LGraphNode {
   executionStatus?: ExecutionStatus
@@ -128,6 +143,11 @@ export interface ExecutableNode extends LGraphNode {
   executionResult?: unknown
   resizable?: boolean
   onResize?: (size: [number, number]) => void
+
+  /** Timestamp when execution started (for elapsed time display) */
+  executionStartTime?: number
+  /** Timestamp when execution completed (for total time display) */
+  executionEndTime?: number
 
   /** Internal flag to prevent circular updates between resize and widget sync */
   _isResizing?: boolean
@@ -238,6 +258,89 @@ export function createNodeClass(
     this.executionError = undefined
     this.executionResult = undefined
 
+    // Add visual rendering for muted/bypassed states and execution glow
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const modeNodeRef = this
+    const originalOnDrawBackground = this.onDrawBackground
+    this.onDrawBackground = function(ctx: CanvasRenderingContext2D, graphCanvas: LGraphCanvas) {
+      // Call original if exists
+      if (originalOnDrawBackground) {
+        originalOnDrawBackground.call(this, ctx, graphCanvas)
+      }
+
+      const mode = (modeNodeRef as unknown as { mode?: number }).mode ?? NODE_MODE.NORMAL
+
+      // Draw pulsing glow effect during execution
+      if (modeNodeRef.executionStatus === 'running') {
+        const time = Date.now() / 1000
+        const pulse = (Math.sin(time * 4) + 1) / 2 // 0 to 1, pulsing
+        const glowIntensity = 0.3 + pulse * 0.4 // 0.3 to 0.7
+
+        ctx.save()
+        ctx.strokeStyle = `rgba(59, 130, 246, ${glowIntensity})` // Blue glow
+        ctx.lineWidth = 2
+        ctx.shadowColor = '#3b82f6'
+        ctx.shadowBlur = 8 + pulse * 8 // 8 to 16px blur
+        ctx.strokeRect(-1, -27, modeNodeRef.size[0] + 2, modeNodeRef.size[1] + 28)
+        ctx.restore()
+
+        // Request redraw for animation
+        modeNodeRef.setDirtyCanvas?.(true, false)
+      } else if (modeNodeRef.executionStatus === 'completed') {
+        // Subtle green border for completed nodes
+        ctx.save()
+        ctx.strokeStyle = 'rgba(34, 197, 94, 0.6)' // Green
+        ctx.lineWidth = 2
+        ctx.strokeRect(-1, -27, modeNodeRef.size[0] + 2, modeNodeRef.size[1] + 28)
+        ctx.restore()
+      } else if (modeNodeRef.executionStatus === 'error') {
+        // Red border for error nodes
+        ctx.save()
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)' // Red
+        ctx.lineWidth = 2
+        ctx.strokeRect(-1, -27, modeNodeRef.size[0] + 2, modeNodeRef.size[1] + 28)
+        ctx.restore()
+      }
+
+      if (mode === NODE_MODE.MUTED) {
+        // Draw semi-transparent overlay for muted nodes
+        ctx.save()
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        ctx.fillRect(0, -26, modeNodeRef.size[0], modeNodeRef.size[1] + 26)
+
+        // Draw "MUTED" text
+        ctx.fillStyle = '#ff6b6b'
+        ctx.font = 'bold 10px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText('MUTED', modeNodeRef.size[0] / 2, -10)
+        ctx.restore()
+      } else if (mode === NODE_MODE.BYPASSED) {
+        // Draw diagonal stripes for bypassed nodes
+        ctx.save()
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'
+        ctx.fillRect(0, -26, modeNodeRef.size[0], modeNodeRef.size[1] + 26)
+
+        // Draw "BYPASS" text
+        ctx.fillStyle = '#ffd93d'
+        ctx.font = 'bold 10px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText('BYPASS', modeNodeRef.size[0] / 2, -10)
+
+        // Draw pass-through arrow
+        ctx.strokeStyle = '#ffd93d'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        const arrowY = modeNodeRef.size[1] / 2
+        ctx.moveTo(5, arrowY)
+        ctx.lineTo(modeNodeRef.size[0] - 15, arrowY)
+        ctx.lineTo(modeNodeRef.size[0] - 25, arrowY - 8)
+        ctx.moveTo(modeNodeRef.size[0] - 15, arrowY)
+        ctx.lineTo(modeNodeRef.size[0] - 25, arrowY + 8)
+        ctx.stroke()
+        ctx.restore()
+      }
+    }
+
     // Calculate minimum size from content (title height + slots + widgets + padding)
     const NODE_TITLE_HEIGHT = 26
     const NODE_SLOT_HEIGHT = 20
@@ -289,15 +392,19 @@ export function createNodeClass(
         this.executionStatus = 'running'
         this.executionProgress = 0
         this.executionError = undefined
+        this.executionStartTime = Date.now()
+        this.executionEndTime = undefined
 
         try {
           const result = await executeFunction(this)
           this.executionStatus = 'completed'
           this.executionProgress = 100
+          this.executionEndTime = Date.now()
           this.executionResult = result
           return result
         } catch (error) {
           this.executionStatus = 'error'
+          this.executionEndTime = Date.now()
           this.executionError = error instanceof Error ? error : new Error(String(error))
           throw error
         }
@@ -327,35 +434,92 @@ export function createNodeClass(
 
         // Determine color and progress based on status
         let progressColor = '#3b82f6' // Blue for running
-        let progressWidth = barWidth * 0.5 // Indeterminate animation
 
         if (status === 'running') {
           progressColor = '#3b82f6' // Blue
           // Animate progress for running state (indeterminate)
           const time = Date.now() / 1000
           const offset = (Math.sin(time * 3) + 1) / 2 // 0 to 1
-          progressWidth = barWidth * 0.3
+          const progressWidth = barWidth * 0.3
           const progressX = barX + (barWidth - progressWidth) * offset
           ctx.fillStyle = progressColor
           ctx.beginPath()
           ctx.roundRect(progressX, barY, progressWidth, barHeight, 1.5)
           ctx.fill()
+
+          // Show elapsed time during execution
+          if (progressNodeRef.executionStartTime) {
+            const elapsed = (Date.now() - progressNodeRef.executionStartTime) / 1000
+            const timeText = elapsed >= 60
+              ? `${Math.floor(elapsed / 60)}m ${(elapsed % 60).toFixed(0)}s`
+              : `${elapsed.toFixed(1)}s`
+
+            ctx.save()
+            ctx.font = '9px sans-serif'
+            ctx.textAlign = 'right'
+            ctx.fillStyle = '#3b82f6'
+            ctx.fillText(timeText, progressNodeRef.size[0] - 4, 20)
+            ctx.restore()
+          }
+
           // Request redraw for animation
           progressNodeRef.setDirtyCanvas?.(true, false)
         } else if (status === 'completed') {
           progressColor = '#22c55e' // Green
-          progressWidth = barWidth
           ctx.fillStyle = progressColor
           ctx.beginPath()
-          ctx.roundRect(barX, barY, progressWidth, barHeight, 1.5)
+          ctx.roundRect(barX, barY, barWidth, barHeight, 1.5)
           ctx.fill()
+
+          // Show total execution time
+          if (progressNodeRef.executionStartTime && progressNodeRef.executionEndTime) {
+            const totalTime = (progressNodeRef.executionEndTime - progressNodeRef.executionStartTime) / 1000
+            const timeText = totalTime >= 60
+              ? `${Math.floor(totalTime / 60)}m ${(totalTime % 60).toFixed(1)}s`
+              : `${totalTime.toFixed(2)}s`
+
+            ctx.save()
+            ctx.font = '9px sans-serif'
+            ctx.textAlign = 'right'
+            ctx.fillStyle = '#22c55e'
+            ctx.fillText(timeText, progressNodeRef.size[0] - 4, 20)
+            ctx.restore()
+          }
         } else if (status === 'error') {
           progressColor = '#ef4444' // Red
-          progressWidth = barWidth
           ctx.fillStyle = progressColor
           ctx.beginPath()
-          ctx.roundRect(barX, barY, progressWidth, barHeight, 1.5)
+          ctx.roundRect(barX, barY, barWidth, barHeight, 1.5)
           ctx.fill()
+
+          // Show error indicator with timing
+          ctx.save()
+          ctx.font = '9px sans-serif'
+          ctx.textAlign = 'right'
+          ctx.fillStyle = '#ef4444'
+
+          // Show execution time if available
+          if (progressNodeRef.executionStartTime && progressNodeRef.executionEndTime) {
+            const totalTime = (progressNodeRef.executionEndTime - progressNodeRef.executionStartTime) / 1000
+            ctx.fillText(`✕ ${totalTime.toFixed(2)}s`, progressNodeRef.size[0] - 4, 20)
+          } else {
+            ctx.fillText('✕ Error', progressNodeRef.size[0] - 4, 20)
+          }
+          ctx.restore()
+
+          // Show truncated error message below the node
+          if (progressNodeRef.executionError) {
+            const errorMsg = progressNodeRef.executionError.message || 'Unknown error'
+            const truncatedMsg = errorMsg.length > 40 ? errorMsg.slice(0, 37) + '...' : errorMsg
+            const nodeBottom = progressNodeRef.size[1]
+
+            ctx.save()
+            ctx.font = '9px sans-serif'
+            ctx.textAlign = 'center'
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.9)'
+            ctx.fillText(truncatedMsg, progressNodeRef.size[0] / 2, nodeBottom + 12)
+            ctx.restore()
+          }
         }
       }
     }

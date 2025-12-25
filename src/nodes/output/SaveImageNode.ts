@@ -1,5 +1,6 @@
 import { createNodeClass, getInputValue, getWidgetValue, type ExecutableNode } from '../base/BaseNode'
 import { NODE_TYPE_COLOURS } from '../../types/nodes'
+import { embedWorkflowInPngBlob, type WorkflowMetadata } from '../../lib/png-metadata'
 
 /**
  * SaveImageNode - Saves generated images to disk.
@@ -47,12 +48,18 @@ export const SaveImageNode = createNodeClass(
         type: 'toggle',
         defaultValue: false,
       },
+      {
+        name: 'embed_workflow',
+        type: 'toggle',
+        defaultValue: true,
+      },
     ],
     properties: {
       filename: 'output_{timestamp}',
       format: 'PNG',
       quality: 90,
       auto_save: false,
+      embed_workflow: true,
       saveCount: 0,
     },
     resizable: true,
@@ -63,6 +70,7 @@ export const SaveImageNode = createNodeClass(
     const format = getWidgetValue<string>(node, 'format') ?? 'PNG'
     const quality = getWidgetValue<number>(node, 'quality') ?? 90
     const autoSave = getWidgetValue<boolean>(node, 'auto_save') ?? false
+    const embedWorkflow = getWidgetValue<boolean>(node, 'embed_workflow') ?? true
 
     if (!image) {
       throw new Error('No image input')
@@ -82,13 +90,24 @@ export const SaveImageNode = createNodeClass(
     const mimeType = getMimeType(format)
 
     // Convert base64 to blob with correct format
-    const blob = await base64ToBlob(image, mimeType, quality)
+    let blob = await base64ToBlob(image, mimeType, quality)
+
+    // Embed workflow metadata in PNG files if enabled
+    if (format === 'PNG' && embedWorkflow && node.graph) {
+      const metadata: WorkflowMetadata = {
+        workflow: node.graph.serialize(),
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        name: filenameTemplate,
+      }
+      blob = await embedWorkflowInPngBlob(blob, metadata)
+    }
 
     // Download the image (autoSave will be used for automatic saving in future)
     void autoSave // Suppress unused variable warning
     downloadBlob(blob, `${filename}.${format.toLowerCase()}`)
 
-    return { saved: true, filename }
+    return { saved: true, filename, hasWorkflow: format === 'PNG' && embedWorkflow }
   }
 )
 

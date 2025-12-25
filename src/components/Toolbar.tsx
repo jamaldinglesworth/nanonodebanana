@@ -3,6 +3,7 @@ interface ToolbarProps {
   onSave: () => void
   onLoad: () => void
   onSettings: () => void
+  onTemplates: () => void
   onRun: () => void
   onCancel: () => void
   isExecuting: boolean
@@ -21,6 +22,7 @@ export function Toolbar({
   onSave,
   onLoad,
   onSettings,
+  onTemplates,
   onRun,
   onCancel,
   isExecuting,
@@ -63,6 +65,14 @@ export function Toolbar({
           title="Load workflow (Ctrl+O)"
         >
           Load
+        </button>
+        <button
+          onClick={onTemplates}
+          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-700 hover:text-zinc-50"
+          title="Prompt Templates (T)"
+        >
+          <span>📝</span>
+          Templates
         </button>
 
         <div className="mx-2 h-6 w-px bg-zinc-600" />

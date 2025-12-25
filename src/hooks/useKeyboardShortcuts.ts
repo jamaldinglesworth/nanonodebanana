@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react'
 import type { LGraph, LGraphCanvas } from 'litegraph.js'
+import { NODE_MODE } from '../nodes/base/BaseNode'
 
 interface KeyboardShortcutsOptions {
   graph: LGraph | null
@@ -9,6 +10,7 @@ interface KeyboardShortcutsOptions {
   onNew?: () => void
   onUndo?: () => void
   onRedo?: () => void
+  onTemplates?: () => void
 }
 
 interface ShortcutAction {
@@ -25,7 +27,7 @@ interface ShortcutAction {
  * Provides standard shortcuts for common operations.
  */
 export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
-  const { graph, canvas, onSave, onLoad, onNew, onUndo, onRedo } = options
+  const { graph, canvas, onSave, onLoad, onNew, onUndo, onRedo, onTemplates } = options
   const undoStack = useRef<string[]>([])
   const redoStack = useRef<string[]>([])
   const lastState = useRef<string | null>(null)
@@ -206,6 +208,41 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
         canvas?.deselectAllNodes()
       },
       description: 'Deselect all',
+    },
+    {
+      key: 'm',
+      action: () => {
+        if (!canvas) return
+        const selectedNodes = Object.values(canvas.selected_nodes)
+        selectedNodes.forEach(node => {
+          const currentMode = (node as unknown as { mode?: number }).mode ?? NODE_MODE.NORMAL
+          // Toggle mute: if already muted, go back to normal, otherwise mute
+          const newMode = currentMode === NODE_MODE.MUTED ? NODE_MODE.NORMAL : NODE_MODE.MUTED
+          ;(node as unknown as { mode: number }).mode = newMode
+        })
+        canvas.setDirty(true, true)
+      },
+      description: 'Toggle mute selected nodes',
+    },
+    {
+      key: 'b',
+      action: () => {
+        if (!canvas) return
+        const selectedNodes = Object.values(canvas.selected_nodes)
+        selectedNodes.forEach(node => {
+          const currentMode = (node as unknown as { mode?: number }).mode ?? NODE_MODE.NORMAL
+          // Toggle bypass: if already bypassed, go back to normal, otherwise bypass
+          const newMode = currentMode === NODE_MODE.BYPASSED ? NODE_MODE.NORMAL : NODE_MODE.BYPASSED
+          ;(node as unknown as { mode: number }).mode = newMode
+        })
+        canvas.setDirty(true, true)
+      },
+      description: 'Toggle bypass selected nodes',
+    },
+    {
+      key: 't',
+      action: () => onTemplates?.(),
+      description: 'Prompt templates',
     },
   ]
 

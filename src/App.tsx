@@ -10,10 +10,15 @@ import { PropertiesPanel } from './components/PropertiesPanel'
 import { OutputPreview } from './components/OutputPreview'
 import { SaveLoadDialog } from './components/SaveLoadDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { PromptTemplates } from './components/PromptTemplates'
+import { WorkflowDetectedDialog } from './components/WorkflowDetectedDialog'
 import { ImageModal } from './components/ImageModal'
+import { ImageHistory } from './components/ImageHistory'
+import { ImageHistoryCapture } from './components/ImageHistoryCapture'
 import { ErrorBoundary, CanvasErrorBoundary } from './components/ErrorBoundary'
 import { GraphProvider } from './context/GraphContext'
 import { ExecutionProvider } from './context/ExecutionContext'
+import { ImageHistoryProvider } from './context/ImageHistoryContext'
 import { workflowApi } from './lib/api-client'
 import type { WorkflowData } from './types/nodes'
 
@@ -29,6 +34,7 @@ function AppContent() {
   const [saveLoadDialogOpen, setSaveLoadDialogOpen] = useState(false)
   const [saveLoadMode, setSaveLoadMode] = useState<'save' | 'load'>('save')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
 
   // Keyboard shortcuts
   const { shortcuts, undo, redo, canUndo, canRedo } = useKeyboardShortcuts({
@@ -45,6 +51,7 @@ function AppContent() {
     onNew: handleNew,
     onUndo: () => console.log('Undo performed'),
     onRedo: () => console.log('Redo performed'),
+    onTemplates: () => setTemplatesOpen(true),
   })
 
   // Handle new workflow
@@ -95,6 +102,25 @@ function AppContent() {
     setSettingsOpen(true)
   }, [])
 
+  // Handle open templates
+  const handleOpenTemplates = useCallback(() => {
+    setTemplatesOpen(true)
+  }, [])
+
+  // Handle workflow loaded from PNG metadata
+  const handleLoadWorkflowFromPng = useCallback((workflow: SerializedLGraph) => {
+    if (!graph) return
+
+    if (graph._nodes.length > 0) {
+      if (!confirm('Load workflow from image? Any unsaved changes will be lost.')) {
+        return
+      }
+    }
+
+    graph.configure(workflow)
+    canvas?.setDirty(true, true)
+  }, [graph, canvas])
+
   return (
     <div className="flex h-screen flex-col bg-zinc-900 text-zinc-50">
       {/* Top toolbar */}
@@ -103,6 +129,7 @@ function AppContent() {
         onSave={handleOpenSave}
         onLoad={handleOpenLoad}
         onSettings={handleOpenSettings}
+        onTemplates={handleOpenTemplates}
         onRun={execute}
         onCancel={cancel}
         isExecuting={isExecuting}
@@ -124,6 +151,9 @@ function AppContent() {
               onCanvasReady={setCanvas}
             />
           </CanvasErrorBoundary>
+
+          {/* Image History Panel */}
+          <ImageHistory />
         </div>
 
         {/* Right panel - Properties and Output */}
@@ -147,8 +177,19 @@ function AppContent() {
         onClose={() => setSettingsOpen(false)}
       />
 
+      <PromptTemplates
+        isOpen={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+      />
+
+      {/* Workflow detected from PNG */}
+      <WorkflowDetectedDialog onLoad={handleLoadWorkflowFromPng} />
+
       {/* Fullscreen image modal */}
       <ImageModal />
+
+      {/* Image history capture (headless) */}
+      <ImageHistoryCapture />
 
       {/* Keyboard shortcuts hint */}
       <div className="fixed bottom-4 right-4 opacity-0 hover:opacity-100 transition-opacity">
@@ -180,7 +221,9 @@ export default function App() {
     <ErrorBoundary>
       <GraphProvider>
         <ExecutionProvider>
-          <AppContent />
+          <ImageHistoryProvider>
+            <AppContent />
+          </ImageHistoryProvider>
         </ExecutionProvider>
       </GraphProvider>
     </ErrorBoundary>

@@ -269,6 +269,7 @@ export const generateRoutes = new Elysia({ prefix: '/api/generate' })
 
   /**
    * Edit images using Nano Banana Pro Edit model.
+   * Accepts up to 14 input images.
    */
   .post(
     '/nano-banana-pro-edit',
@@ -277,7 +278,7 @@ export const generateRoutes = new Elysia({ prefix: '/api/generate' })
 
       const result = await editWithNanoBananaPro({
         prompt: body.prompt,
-        imageUrls: [body.imageUrl],
+        imageUrls: body.imageUrls,
         numImages: body.numImages,
         resolution: body.resolution,
         aspectRatio: body.aspectRatio,
@@ -297,7 +298,7 @@ export const generateRoutes = new Elysia({ prefix: '/api/generate' })
     {
       body: t.Object({
         prompt: t.String({ minLength: 3, maxLength: 50000 }),
-        imageUrl: t.String({ minLength: 1 }),
+        imageUrls: t.Array(t.String({ minLength: 1 }), { minItems: 1, maxItems: 14 }),
         numImages: t.Number({ minimum: 1, maximum: 4, default: 1 }),
         resolution: t.Union([
           t.Literal('1K'),
