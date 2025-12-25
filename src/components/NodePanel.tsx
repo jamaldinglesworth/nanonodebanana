@@ -15,6 +15,7 @@ import {
   ImageBlendNode,
   ImageAdjustNode,
   ImageFilterNode,
+  AnnotationNode,
   GeminiGeneratorNode,
   FalFluxNode,
   FalVideoNode,
@@ -46,6 +47,7 @@ const NODE_PATHS: Record<string, unknown> = {
   'processing/blend': ImageBlendNode,
   'processing/adjust': ImageAdjustNode,
   'processing/filter': ImageFilterNode,
+  'processing/annotate': AnnotationNode,
 
   // Generation nodes
   'generation/gemini': GeminiGeneratorNode,

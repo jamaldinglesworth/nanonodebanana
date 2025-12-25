@@ -16,6 +16,7 @@ import { ImageModal } from './components/ImageModal'
 import { ImageHistory } from './components/ImageHistory'
 import { ImageHistoryCapture } from './components/ImageHistoryCapture'
 import { MultiSelectToolbar } from './components/MultiSelectToolbar'
+import { AnnotationModalHandler } from './components/AnnotationModalHandler'
 import { ErrorBoundary, CanvasErrorBoundary } from './components/ErrorBoundary'
 import { GraphProvider } from './context/GraphContext'
 import { ExecutionProvider } from './context/ExecutionContext'
@@ -220,6 +221,9 @@ function AppContent() {
 
       {/* Fullscreen image modal */}
       <ImageModal />
+
+      {/* Annotation modal for drawing on images */}
+      <AnnotationModalHandler />
 
       {/* Image history capture (headless) */}
       <ImageHistoryCapture />
