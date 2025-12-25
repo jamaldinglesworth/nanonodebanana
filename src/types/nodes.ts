@@ -38,6 +38,8 @@ export interface ExecutionContext {
  */
 export interface ExecutionEngine {
   execute(graph: LGraph): AsyncGenerator<ExecutionContext>
+  executeFromNode(graph: LGraph, startNodeId: number): AsyncGenerator<ExecutionContext>
+  executeNodeOnly(graph: LGraph, nodeId: number): AsyncGenerator<ExecutionContext>
   cancel(): void
   getResults(): Map<string, unknown>
 }

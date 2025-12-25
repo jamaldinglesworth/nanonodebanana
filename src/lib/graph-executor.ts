@@ -231,6 +231,273 @@ export function createExecutionEngine(): ExecutionEngine {
     }
   }
 
+  /**
+   * Execute from a specific node onwards.
+   * Runs the starting node and all nodes that depend on it (downstream).
+   * Uses cached results for upstream dependencies.
+   */
+  async function* executeFromNode(graph: LGraph, startNodeId: number): AsyncGenerator<ExecutionContext> {
+    cancelled = false
+
+    // Get all nodes that need to be executed (startNode and all downstream)
+    const sortedNodes = topologicalSort(graph)
+    const startNodeIndex = sortedNodes.findIndex(n => n.id === startNodeId)
+
+    if (startNodeIndex === -1) {
+      yield {
+        nodeId: String(startNodeId),
+        status: 'error',
+        error: new Error(`Node ${startNodeId} not found in graph`),
+      }
+      return
+    }
+
+    // Find all nodes downstream from startNode (including startNode)
+    const downstreamNodes = new Set<number>([startNodeId])
+    const nodesToExecute: LGraphNode[] = []
+
+    // Build set of downstream node IDs
+    for (let i = startNodeIndex; i < sortedNodes.length; i++) {
+      const node = sortedNodes[i]!
+      // Check if any input comes from a downstream node
+      let hasUpstreamDownstream = node.id === startNodeId
+      if (node.inputs) {
+        for (const input of node.inputs) {
+          if (input.link != null) {
+            const linkInfo = graph.links[input.link]
+            if (linkInfo && downstreamNodes.has(linkInfo.origin_id)) {
+              hasUpstreamDownstream = true
+              break
+            }
+          }
+        }
+      }
+      if (hasUpstreamDownstream) {
+        downstreamNodes.add(node.id)
+        nodesToExecute.push(node)
+      }
+    }
+
+    const nodeResults = new Map<string, Record<string, unknown>>()
+
+    // Pre-populate with cached results for nodes we're not re-executing
+    for (const [nodeId, result] of results.entries()) {
+      if (!downstreamNodes.has(Number(nodeId))) {
+        nodeResults.set(nodeId, result as Record<string, unknown>)
+      }
+    }
+
+    for (let i = 0; i < nodesToExecute.length; i++) {
+      if (cancelled) break
+
+      const node = nodesToExecute[i]!
+      const nodeId = String(node.id)
+      const nodeMode = (node as unknown as { mode?: number }).mode ?? NODE_MODE.NORMAL
+
+      // Handle muted/bypassed nodes same as full execute
+      if (nodeMode === NODE_MODE.MUTED) {
+        const nodeOutput: Record<string, unknown> = {}
+        if (node.outputs) {
+          for (const output of node.outputs) {
+            nodeOutput[output.name] = null
+          }
+        }
+        nodeResults.set(nodeId, nodeOutput)
+        results.set(nodeId, nodeOutput)
+        yield {
+          nodeId,
+          status: 'completed',
+          progress: ((i + 1) / nodesToExecute.length) * 100,
+          result: nodeOutput,
+        }
+        continue
+      }
+
+      if (nodeMode === NODE_MODE.BYPASSED) {
+        const inputs = getNodeInputs(node, graph, nodeResults)
+        const nodeOutput: Record<string, unknown> = {}
+        if (node.inputs && node.outputs) {
+          for (let outIdx = 0; outIdx < node.outputs.length; outIdx++) {
+            const output = node.outputs[outIdx]
+            if (!output) continue
+            let matchedValue: unknown = undefined
+            for (let inIdx = 0; inIdx < node.inputs.length; inIdx++) {
+              const input = node.inputs[inIdx]
+              if (!input) continue
+              if (input.type === output.type && inputs[input.name] !== undefined) {
+                matchedValue = inputs[input.name]
+                break
+              }
+            }
+            if (matchedValue === undefined && node.inputs[outIdx]) {
+              const inputName = node.inputs[outIdx]?.name
+              if (inputName) {
+                matchedValue = inputs[inputName]
+              }
+            }
+            nodeOutput[output.name] = matchedValue
+          }
+        }
+        nodeResults.set(nodeId, nodeOutput)
+        results.set(nodeId, nodeOutput)
+        yield {
+          nodeId,
+          status: 'completed',
+          progress: ((i + 1) / nodesToExecute.length) * 100,
+          result: nodeOutput,
+        }
+        continue
+      }
+
+      yield {
+        nodeId,
+        status: 'running',
+        progress: (i / nodesToExecute.length) * 100,
+      }
+
+      try {
+        const inputs = getNodeInputs(node, graph, nodeResults)
+        let nodeOutput: Record<string, unknown> = {}
+
+        if ('onExecute' in node && typeof node.onExecute === 'function') {
+          for (const [key, value] of Object.entries(inputs)) {
+            node.setProperty(key, value)
+          }
+          const executeResult = await (node as unknown as { onExecute: () => Promise<Record<string, unknown>> }).onExecute()
+          nodeOutput = executeResult || {}
+        }
+
+        nodeResults.set(nodeId, nodeOutput)
+        results.set(nodeId, nodeOutput)
+
+        yield {
+          nodeId,
+          status: 'completed',
+          progress: ((i + 1) / nodesToExecute.length) * 100,
+          result: nodeOutput,
+        }
+      } catch (error) {
+        yield {
+          nodeId,
+          status: 'error',
+          error: error instanceof Error ? error : new Error(String(error)),
+        }
+      }
+    }
+  }
+
+  /**
+   * Execute only a single node using cached inputs from previous executions.
+   */
+  async function* executeNodeOnly(graph: LGraph, nodeId: number): AsyncGenerator<ExecutionContext> {
+    cancelled = false
+
+    const node = graph.getNodeById(nodeId)
+    if (!node) {
+      yield {
+        nodeId: String(nodeId),
+        status: 'error',
+        error: new Error(`Node ${nodeId} not found in graph`),
+      }
+      return
+    }
+
+    const nodeIdStr = String(nodeId)
+    const nodeMode = (node as unknown as { mode?: number }).mode ?? NODE_MODE.NORMAL
+
+    // Build nodeResults from cached results
+    const nodeResults = new Map<string, Record<string, unknown>>()
+    for (const [id, result] of results.entries()) {
+      nodeResults.set(id, result as Record<string, unknown>)
+    }
+
+    if (nodeMode === NODE_MODE.MUTED) {
+      const nodeOutput: Record<string, unknown> = {}
+      if (node.outputs) {
+        for (const output of node.outputs) {
+          nodeOutput[output.name] = null
+        }
+      }
+      results.set(nodeIdStr, nodeOutput)
+      yield {
+        nodeId: nodeIdStr,
+        status: 'completed',
+        progress: 100,
+        result: nodeOutput,
+      }
+      return
+    }
+
+    if (nodeMode === NODE_MODE.BYPASSED) {
+      const inputs = getNodeInputs(node, graph, nodeResults)
+      const nodeOutput: Record<string, unknown> = {}
+      if (node.inputs && node.outputs) {
+        for (let outIdx = 0; outIdx < node.outputs.length; outIdx++) {
+          const output = node.outputs[outIdx]
+          if (!output) continue
+          let matchedValue: unknown = undefined
+          for (let inIdx = 0; inIdx < node.inputs.length; inIdx++) {
+            const input = node.inputs[inIdx]
+            if (!input) continue
+            if (input.type === output.type && inputs[input.name] !== undefined) {
+              matchedValue = inputs[input.name]
+              break
+            }
+          }
+          if (matchedValue === undefined && node.inputs[outIdx]) {
+            const inputName = node.inputs[outIdx]?.name
+            if (inputName) {
+              matchedValue = inputs[inputName]
+            }
+          }
+          nodeOutput[output.name] = matchedValue
+        }
+      }
+      results.set(nodeIdStr, nodeOutput)
+      yield {
+        nodeId: nodeIdStr,
+        status: 'completed',
+        progress: 100,
+        result: nodeOutput,
+      }
+      return
+    }
+
+    yield {
+      nodeId: nodeIdStr,
+      status: 'running',
+      progress: 0,
+    }
+
+    try {
+      const inputs = getNodeInputs(node, graph, nodeResults)
+      let nodeOutput: Record<string, unknown> = {}
+
+      if ('onExecute' in node && typeof node.onExecute === 'function') {
+        for (const [key, value] of Object.entries(inputs)) {
+          node.setProperty(key, value)
+        }
+        const executeResult = await (node as unknown as { onExecute: () => Promise<Record<string, unknown>> }).onExecute()
+        nodeOutput = executeResult || {}
+      }
+
+      results.set(nodeIdStr, nodeOutput)
+
+      yield {
+        nodeId: nodeIdStr,
+        status: 'completed',
+        progress: 100,
+        result: nodeOutput,
+      }
+    } catch (error) {
+      yield {
+        nodeId: nodeIdStr,
+        status: 'error',
+        error: error instanceof Error ? error : new Error(String(error)),
+      }
+    }
+  }
+
   function cancel() {
     cancelled = true
   }
@@ -241,6 +508,8 @@ export function createExecutionEngine(): ExecutionEngine {
 
   return {
     execute,
+    executeFromNode,
+    executeNodeOnly,
     cancel,
     getResults,
   }

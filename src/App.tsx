@@ -15,6 +15,7 @@ import { WorkflowDetectedDialog } from './components/WorkflowDetectedDialog'
 import { ImageModal } from './components/ImageModal'
 import { ImageHistory } from './components/ImageHistory'
 import { ImageHistoryCapture } from './components/ImageHistoryCapture'
+import { MultiSelectToolbar } from './components/MultiSelectToolbar'
 import { ErrorBoundary, CanvasErrorBoundary } from './components/ErrorBoundary'
 import { GraphProvider } from './context/GraphContext'
 import { ExecutionProvider } from './context/ExecutionContext'
@@ -28,13 +29,14 @@ import type { WorkflowData } from './types/nodes'
  */
 function AppContent() {
   const { graph, selectedNode, canvas, setCanvas } = useGraph()
-  const { isExecuting, execute, cancel } = useExecution()
+  const { isExecuting, execute, executeFromNode, executeNodeOnly, cancel } = useExecution()
 
   // Dialog state
   const [saveLoadDialogOpen, setSaveLoadDialogOpen] = useState(false)
   const [saveLoadMode, setSaveLoadMode] = useState<'save' | 'load'>('save')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [templatesOpen, setTemplatesOpen] = useState(false)
+  const [curvedConnections, setCurvedConnections] = useState(true)
 
   // Keyboard shortcuts
   const { shortcuts, undo, redo, canUndo, canRedo } = useKeyboardShortcuts({
@@ -107,6 +109,29 @@ function AppContent() {
     setTemplatesOpen(true)
   }, [])
 
+  // Handle toggle curved connections
+  const handleToggleCurvedConnections = useCallback(() => {
+    if (!canvas) return
+    const newValue = !curvedConnections
+    setCurvedConnections(newValue)
+    canvas.render_curved_connections = newValue
+    canvas.setDirty(true, true)
+  }, [canvas, curvedConnections])
+
+  // Handle run from selected node
+  const handleRunFromSelected = useCallback(() => {
+    if (selectedNode) {
+      executeFromNode(selectedNode.id)
+    }
+  }, [selectedNode, executeFromNode])
+
+  // Handle run selected node only
+  const handleRunSelectedOnly = useCallback(() => {
+    if (selectedNode) {
+      executeNodeOnly(selectedNode.id)
+    }
+  }, [selectedNode, executeNodeOnly])
+
   // Handle workflow loaded from PNG metadata
   const handleLoadWorkflowFromPng = useCallback((workflow: SerializedLGraph) => {
     if (!graph) return
@@ -131,12 +156,17 @@ function AppContent() {
         onSettings={handleOpenSettings}
         onTemplates={handleOpenTemplates}
         onRun={execute}
+        onRunFromSelected={handleRunFromSelected}
+        onRunSelectedOnly={handleRunSelectedOnly}
         onCancel={cancel}
         isExecuting={isExecuting}
         canUndo={canUndo}
         canRedo={canRedo}
         onUndo={undo}
         onRedo={redo}
+        hasSelectedNode={!!selectedNode}
+        curvedConnections={curvedConnections}
+        onToggleCurvedConnections={handleToggleCurvedConnections}
       />
 
       {/* Main content area */}
@@ -154,6 +184,9 @@ function AppContent() {
 
           {/* Image History Panel */}
           <ImageHistory />
+
+          {/* Multi-Select Toolbar */}
+          <MultiSelectToolbar graph={graph} canvas={canvas} />
         </div>
 
         {/* Right panel - Properties and Output */}

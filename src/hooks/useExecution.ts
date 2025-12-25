@@ -14,6 +14,8 @@ export function useExecution() {
     executionErrors: context.executionErrors,
     progress: context.progress,
     execute: context.execute,
+    executeFromNode: context.executeFromNode,
+    executeNodeOnly: context.executeNodeOnly,
     cancel: context.cancel,
     getNodeStatus: context.getNodeStatus,
   }

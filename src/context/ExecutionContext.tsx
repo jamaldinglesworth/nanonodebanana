@@ -20,6 +20,8 @@ interface ExecutionState {
   executionErrors: Map<string, Error>
   progress: number
   execute: () => Promise<void>
+  executeFromNode: (nodeId: number) => Promise<void>
+  executeNodeOnly: (nodeId: number) => Promise<void>
   cancel: () => void
   getNodeStatus: (nodeId: string) => NodeExecutionContext | undefined
 }
@@ -103,6 +105,108 @@ export function ExecutionProvider({ children }: ExecutionProviderProps) {
     }
   }, [graph, canvas, executionResults, executionErrors])
 
+  /**
+   * Execute from a specific node - runs the selected node and all downstream nodes.
+   * Uses cached results from previous executions for upstream dependencies.
+   */
+  const executeFromNode = useCallback(async (startNodeId: number) => {
+    if (!graph) {
+      console.error('No graph available for execution')
+      return
+    }
+
+    setIsExecuting(true)
+    setProgress(0)
+    // Don't clear previous results - we'll use them for upstream nodes
+    setNodeStatuses(new Map())
+
+    console.log(`Starting execution from node ${startNodeId}...`)
+
+    try {
+      const engine = engineRef.current
+
+      // Execute the graph starting from the specified node
+      for await (const status of engine.executeFromNode(graph, startNodeId)) {
+        setCurrentNodeId(status.nodeId)
+        setProgress(status.progress ?? 0)
+
+        setNodeStatuses(prev => {
+          const next = new Map(prev)
+          next.set(status.nodeId, status)
+          return next
+        })
+
+        if (status.status === 'completed' && status.result) {
+          executionResults.set(status.nodeId, status.result)
+          console.log(`Node ${status.nodeId} completed:`, status.result)
+        } else if (status.status === 'error' && status.error) {
+          executionErrors.set(status.nodeId, status.error)
+          console.error(`Node ${status.nodeId} error:`, status.error)
+        }
+
+        canvas?.setDirty(true, true)
+      }
+
+      console.log('Execution from node completed')
+      setProgress(100)
+    } catch (error) {
+      console.error('Execution failed:', error)
+    } finally {
+      setIsExecuting(false)
+      setCurrentNodeId(null)
+    }
+  }, [graph, canvas, executionResults, executionErrors])
+
+  /**
+   * Execute only the selected node - uses cached inputs from previous executions.
+   */
+  const executeNodeOnly = useCallback(async (nodeId: number) => {
+    if (!graph) {
+      console.error('No graph available for execution')
+      return
+    }
+
+    setIsExecuting(true)
+    setProgress(0)
+    setNodeStatuses(new Map())
+
+    console.log(`Executing only node ${nodeId}...`)
+
+    try {
+      const engine = engineRef.current
+
+      // Execute only the specified node
+      for await (const status of engine.executeNodeOnly(graph, nodeId)) {
+        setCurrentNodeId(status.nodeId)
+        setProgress(status.progress ?? 0)
+
+        setNodeStatuses(prev => {
+          const next = new Map(prev)
+          next.set(status.nodeId, status)
+          return next
+        })
+
+        if (status.status === 'completed' && status.result) {
+          executionResults.set(status.nodeId, status.result)
+          console.log(`Node ${status.nodeId} completed:`, status.result)
+        } else if (status.status === 'error' && status.error) {
+          executionErrors.set(status.nodeId, status.error)
+          console.error(`Node ${status.nodeId} error:`, status.error)
+        }
+
+        canvas?.setDirty(true, true)
+      }
+
+      console.log('Node execution completed')
+      setProgress(100)
+    } catch (error) {
+      console.error('Execution failed:', error)
+    } finally {
+      setIsExecuting(false)
+      setCurrentNodeId(null)
+    }
+  }, [graph, canvas, executionResults, executionErrors])
+
   const cancel = useCallback(() => {
     engineRef.current.cancel()
     setIsExecuting(false)
@@ -124,6 +228,8 @@ export function ExecutionProvider({ children }: ExecutionProviderProps) {
     executionErrors,
     progress,
     execute,
+    executeFromNode,
+    executeNodeOnly,
     cancel,
     getNodeStatus,
   }
