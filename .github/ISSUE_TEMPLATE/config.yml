@@ -1,8 +1,0 @@
-blank_issues_enabled: true
-contact_links:
-  - name: Documentation
-    url: https://github.com/CodeWithBehnam/nanonodebanana#readme
-    about: Check the README for setup instructions and documentation
-  - name: Discussions
-    url: https://github.com/CodeWithBehnam/nanonodebanana/discussions
-    about: Ask questions and share ideas in Discussions

